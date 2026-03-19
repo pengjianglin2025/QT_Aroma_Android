@@ -1,0 +1,211 @@
+{
+    "name" : "Aroma Buddy",
+    "appid" : "__UNI__AE1A5B6",
+    "description" : "",
+    "versionName" : "1.6.6",
+    "versionCode" : 169,
+    "transformPx" : false,
+    "app-plus" : {
+        "compatible" : {
+            "ignoreVersion" : true
+        },
+        "usingComponents" : true,
+        "nvueCompiler" : "uni-app",
+        "splashscreen" : {
+            "alwaysShowBeforeRender" : true,
+            "waiting" : true,
+            "autoclose" : true,
+            "delay" : 0
+        },
+        /* APP名称国际化 */
+        "locales" : {
+            "en" : {
+                // 英文  
+                "name" : "Aroma Buddy" // 应用名称  
+            },
+            "zh" : {
+                // 中文（简体）  
+                "name" : "Aroma Buddy" // 应用名称
+            }
+        },
+        "modules" : {
+            "Barcode" : {},
+            "Bluetooth" : {},
+            "Geolocation" : {}
+        },
+        "distribute" : {
+            "android" : {
+                "permissions" : [
+                    "<uses-feature android:name=\"android.hardware.camera\"/>",
+                    "<uses-feature android:name=\"android.hardware.camera.autofocus\"/>",
+                    "<uses-permission android:name=\"android.permission.ACCESS_COARSE_LOCATION\"/>",
+                    "<uses-permission android:name=\"android.permission.ACCESS_FINE_LOCATION\"/>",
+                    "<uses-permission android:name=\"android.permission.ACCESS_LOCATION_EXTRA_COMMANDS\"/>",
+                    "<uses-permission android:name=\"android.permission.ACCESS_NETWORK_STATE\"/>",
+                    "<uses-permission android:name=\"android.permission.ACCESS_WIFI_STATE\"/>",
+                    "<uses-permission android:name=\"android.permission.BLUETOOTH\"/>",
+                    "<uses-permission android:name=\"android.permission.BLUETOOTH_ADMIN\"/>",
+                    "<uses-permission android:name=\"android.permission.BLUETOOTH_PRIVILEGED\"/>",
+                    "<uses-permission android:name=\"android.permission.CAMERA\"/>",
+                    "<uses-permission android:name=\"android.permission.CHANGE_NETWORK_STATE\"/>",
+                    "<uses-permission android:name=\"android.permission.CHANGE_WIFI_MULTICAST_STATE\"/>",
+                    "<uses-permission android:name=\"android.permission.CHANGE_WIFI_STATE\"/>",
+                    "<uses-permission android:name=\"android.permission.CONTROL_LOCATION_UPDATES\"/>",
+                    "<uses-permission android:name=\"android.permission.FLASHLIGHT\"/>",
+                    "<uses-permission android:name=\"android.permission.GET_ACCOUNTS\"/>",
+                    "<uses-permission android:name=\"android.permission.INSTALL_LOCATION_PROVIDER\"/>",
+                    "<uses-permission android:name=\"android.permission.MOUNT_UNMOUNT_FILESYSTEMS\"/>",
+                    "<uses-permission android:name=\"android.permission.READ_LOGS\"/>",
+                    "<uses-permission android:name=\"android.permission.READ_PHONE_STATE\"/>",
+                    "<uses-permission android:name=\"android.permission.RECORD_AUDIO\"/>",
+                    "<uses-permission android:name=\"android.permission.VIBRATE\"/>",
+                    "<uses-permission android:name=\"android.permission.WAKE_LOCK\"/>",
+                    "<uses-permission android:name=\"android.permission.WRITE_SETTINGS\"/>"
+                ],
+                "minSdkVersion" : 26,
+                "abiFilters" : [ "armeabi-v7a", "arm64-v8a", "x86" ],
+                "targetSdkVersion" : 36,
+                "excludePermissions" : [
+                    "<uses-permission android:name=\"android.permission.READ_MEDIA_IMAGES\"/>",
+                    "<uses-permission android:name=\"android.permission.READ_MEDIA_VIDEO\"/>"
+                ]
+            },
+            "ios" : {
+                "dSYMs" : false,
+                "idfa" : false,
+                "privacyDescription" : {
+                    "NSLocationWhenInUseUsageDescription" : "Opening the location service allows us to discover nearby Bluetooth devices",
+                    "NSLocationAlwaysUsageDescription" : "Opening the location service allows us to discover nearby Bluetooth devices",
+                    "NSLocationAlwaysAndWhenInUseUsageDescription" : "Opening the location service allows us to discover nearby Bluetooth devices",
+                    "NSBluetoothPeripheralUsageDescription" : "Using Bluetooth to discover nearby Bluetooth devices",
+                    "NSBluetoothAlwaysUsageDescription" : "Using Bluetooth to discover nearby Bluetooth devices",
+                    "NSLocalNetworkUsageDescription" : "Accessing the local network can be used to control devices",
+                    "NSCameraUsageDescription" : "Request to enable camera permission to scan QR codes",
+                    "NSPhotoLibraryUsageDescription" : "Request to use album permissions to access mobile album content"
+                }
+            },
+            "sdkConfigs" : {
+                "ad" : {},
+                "oauth" : {},
+                "geolocation" : {},
+                "push" : {},
+                "payment" : {}
+            },
+            "icons" : {
+                "android" : {
+                    "hdpi" : "unpackage/res/icons/72x72.png",
+                    "xhdpi" : "unpackage/res/icons/96x96.png",
+                    "xxhdpi" : "unpackage/res/icons/144x144.png",
+                    "xxxhdpi" : "unpackage/res/icons/192x192.png"
+                },
+                "ios" : {
+                    "appstore" : "unpackage/res/icons/1024x1024.png",
+                    "ipad" : {
+                        "app" : "unpackage/res/icons/76x76.png",
+                        "app@2x" : "unpackage/res/icons/152x152.png",
+                        "notification" : "unpackage/res/icons/20x20.png",
+                        "notification@2x" : "unpackage/res/icons/40x40.png",
+                        "proapp@2x" : "unpackage/res/icons/167x167.png",
+                        "settings" : "unpackage/res/icons/29x29.png",
+                        "settings@2x" : "unpackage/res/icons/58x58.png",
+                        "spotlight" : "unpackage/res/icons/40x40.png",
+                        "spotlight@2x" : "unpackage/res/icons/80x80.png"
+                    },
+                    "iphone" : {
+                        "app@2x" : "unpackage/res/icons/120x120.png",
+                        "app@3x" : "unpackage/res/icons/180x180.png",
+                        "notification@2x" : "unpackage/res/icons/40x40.png",
+                        "notification@3x" : "unpackage/res/icons/60x60.png",
+                        "settings@2x" : "unpackage/res/icons/58x58.png",
+                        "settings@3x" : "unpackage/res/icons/87x87.png",
+                        "spotlight@2x" : "unpackage/res/icons/80x80.png",
+                        "spotlight@3x" : "unpackage/res/icons/120x120.png"
+                    }
+                }
+            },
+            "splashscreen" : {
+                "useOriginalMsgbox" : true
+            }
+        },
+        "nativePlugins" : {
+            "XM-Quectel" : {
+                "que_cn_appKey" : "C.DM.1364139825977344.1",
+                "que_cn_appSerect" : "9yLA1sN8doWLTVFudqpRWT7utwTsvMSeG27hCAWj5TM4",
+                "que_eu_appKey" : "C.DM.1364139825977344.1",
+                "que_eu_appSerect" : "9yLA1sN8doWLTVFudqpRWT7utwTsvMSeG27hCAWj5TM4",
+                "que_us_appKey" : "U.DM.1163850796201821.1",
+                "que_us_appSerect" : "A9Zi5q2JWpA7bNQsbD49dAUuQiNFUmBQY8v3AVmuNUA8",
+                "__plugin_info__" : {
+                    "name" : "bby quectel插件",
+                    "description" : "quectel",
+                    "platforms" : "Android,iOS",
+                    "url" : "",
+                    "android_package_name" : "",
+                    "ios_bundle_id" : "",
+                    "isCloud" : false,
+                    "bought" : -1,
+                    "pid" : "",
+                    "parameters" : {
+                        "que_cn_appKey" : {
+                            "des" : "AppKey",
+                            "key" : "userDomain_CN",
+                            "value" : ""
+                        },
+                        "que_cn_appSerect" : {
+                            "des" : "AppSerect",
+                            "key" : "userScrete_CN",
+                            "value" : ""
+                        },
+                        "que_eu_appKey" : {
+                            "des" : "AppKey",
+                            "key" : "userDomain_EU",
+                            "value" : ""
+                        },
+                        "que_eu_appSerect" : {
+                            "des" : "AppSerect",
+                            "key" : "userScrete_EU",
+                            "value" : ""
+                        },
+                        "que_us_appKey" : {
+                            "des" : "AppKey",
+                            "key" : "userDomain_US",
+                            "value" : ""
+                        },
+                        "que_us_appSerect" : {
+                            "des" : "AppSerect",
+                            "key" : "userScrete_US",
+                            "value" : ""
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "quickapp" : {},
+    "mp-weixin" : {
+        "appid" : "wxccd7e2a0911b3397",
+        "setting" : {
+            "urlCheck" : false,
+            "es6" : false,
+            "minified" : true,
+            "postcss" : true
+        },
+        "optimization" : {
+            "subPackages" : true
+        },
+        "usingComponents" : true
+    },
+    "vueVersion" : "2",
+    "h5" : {
+        "template" : "static/index.html",
+        "devServer" : {
+            "port" : 9090,
+            "https" : false
+        },
+        "title" : "RuoYi-App",
+        "router" : {
+            "mode" : "hash",
+            "base" : "./"
+        }
+    }
+}

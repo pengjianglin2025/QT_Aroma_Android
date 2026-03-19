@@ -1,0 +1,9 @@
+/**
+ * Minified by jsDelivr using Terser v5.39.0.
+ * Original file: /npm/utf8@3.0.0/utf8.js
+ *
+ * Do NOT use SRI with dynamically generated files! More information: https://www.jsdelivr.com/using-sri-with-dynamic-files
+ */
+/*! https://mths.be/utf8js v3.0.0 by @mathias */
+!function(r){var n,t,o,e=String.fromCharCode;function i(r){for(var n,t,o=[],e=0,i=r.length;e<i;)(n=r.charCodeAt(e++))>=55296&&n<=56319&&e<i?56320==(64512&(t=r.charCodeAt(e++)))?o.push(((1023&n)<<10)+(1023&t)+65536):(o.push(n),e--):o.push(n);return o}function u(r){if(r>=55296&&r<=57343)throw Error("Lone surrogate U+"+r.toString(16).toUpperCase()+" is not a scalar value")}function f(r,n){return e(r>>n&63|128)}function a(r){if(!(4294967168&r))return e(r);var n="";return 4294965248&r?4294901760&r?4292870144&r||(n=e(r>>18&7|240),n+=f(r,12),n+=f(r,6)):(u(r),n=e(r>>12&15|224),n+=f(r,6)):n=e(r>>6&31|192),n+=e(63&r|128)}function c(){if(o>=t)throw Error("Invalid byte index");var r=255&n[o];if(o++,128==(192&r))return 63&r;throw Error("Invalid continuation byte")}function h(){var r,e;if(o>t)throw Error("Invalid byte index");if(o==t)return!1;if(r=255&n[o],o++,!(128&r))return r;if(192==(224&r)){if((e=(31&r)<<6|c())>=128)return e;throw Error("Invalid continuation byte")}if(224==(240&r)){if((e=(15&r)<<12|c()<<6|c())>=2048)return u(e),e;throw Error("Invalid continuation byte")}if(240==(248&r)&&(e=(7&r)<<18|c()<<12|c()<<6|c())>=65536&&e<=1114111)return e;throw Error("Invalid UTF-8 detected")}r.version="3.0.0",r.encode=function(r){for(var n=i(r),t=n.length,o=-1,e="";++o<t;)e+=a(n[o]);return e},r.decode=function(r){n=i(r),t=n.length,o=0;for(var u,f=[];!1!==(u=h());)f.push(u);return function(r){for(var n,t=r.length,o=-1,i="";++o<t;)(n=r[o])>65535&&(i+=e((n-=65536)>>>10&1023|55296),n=56320|1023&n),i+=e(n);return i}(f)}}("undefined"==typeof exports?this.utf8={}:exports);
+//# sourceMappingURL=/sm/86786eb92eca9899b9bdb7d245317bbacc2820ce425f141e67954b4b9ba2f7a1.map

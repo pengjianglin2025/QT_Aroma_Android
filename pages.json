@@ -1,0 +1,258 @@
+{
+	"pages": [{
+			"path": "pages/selectMode",
+			"style": {
+				"navigationStyle": "custom"
+			}
+		},{
+			"path": "pages/index",
+			"style": {
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path": "pages/privacy"
+			// "style": {
+			// 	"navigationBarTitleText": "%Privacy%"
+			// }
+		},
+		{
+			"path": "pages/mine/index",
+			"style": {
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path": "pages/blemodule/setting",
+			"style": {
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path": "pages/login",
+			"style": {
+				// "navigationBarTitleText": "%login%"
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path": "pages/register",
+			"style": {
+				"navigationBarTitleText": "%register%"
+			}
+		},
+		{
+			"path": "pages/forgotpassword",
+			"style": {
+				"navigationBarTitleText": "%reset-pwd%"
+			}
+		},
+		{
+			"path": "pages/devices/regulate/index",
+			"style": {
+				"navigationStyle": "custom"
+			}
+
+		},
+		{
+			"path": "pages/work/pattern/index",
+			"style": {
+				"navigationBarTitleText": "%work-pattern%",
+				"enablePullDownRefresh": true
+			}
+
+		},
+		{
+			"path": "pages/work/pattern/maintain",
+			"style": {
+				"navigationStyle": "custom"
+			}
+
+		},
+		{
+			"path": "pages/blemodule/blepattern/index",
+			"style": {
+				"navigationBarTitleText": "%work-pattern%",
+				"enablePullDownRefresh": true
+			}
+		
+		},
+		{
+			"path": "pages/blemodule/setting/index",
+			"style": {
+				"navigationStyle": "custom"
+			}
+		
+		},
+		{
+			"path": "pages/blemodule/blepattern/maintain",
+			"style": {
+				"navigationStyle": "custom"
+			}
+		
+		},
+		{
+			"path": "pages/blemodule/blepattern/ivy07maintain",
+			"style": {
+				"navigationStyle": "custom"
+			}
+		
+		},
+		{
+			"path": "pages/devices/group/index",
+			"style": {
+				"navigationStyle": "custom"
+			}
+		}, {
+			"path": "pages/devices/group/edit",
+			"style": {
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path": "pages/mine/info/index",
+			"style": {
+				"navigationBarTitleText": "%person-info%"
+			}
+		},
+		{
+			"path": "pages/mine/about/index",
+			"style": {
+				"navigationBarTitleText": "%mine.about-us%"
+			}
+		},
+		{
+			"path": "pages/devices/search/index",
+			"style": {
+				"navigationStyle": "custom"
+			}
+		},
+
+		{
+			"path": "pages/devices/custom/index",
+			"style": {
+				"navigationStyle": "custom"
+			}
+		}, {
+			"path": "pages/work/index",
+			"style": {
+				"navigationBarTitleText": "工作台"
+			}
+		}, {
+			"path": "pages/work/test",
+			"style": {
+				"navigationBarTitleText": "工作台"
+			}
+		}, {
+			"path": "pages/mine/avatar/index",
+			"style": {
+				"navigationBarTitleText": "修改头像"
+			}
+		}, {
+			"path": "pages/mine/info/edit",
+			"style": {
+				"navigationBarTitleText": "编辑资料"
+			}
+		}, {
+			"path": "pages/mine/pwd/index",
+			"style": {
+				"navigationBarTitleText": "修改密码"
+			}
+		}, {
+			"path": "pages/mine/setting/index",
+			"style": {
+				"navigationBarTitleText": "应用设置"
+			}
+		}, {
+			"path": "pages/devices/timing/index",
+			"style": {
+				"navigationStyle": "custom"
+			}
+		}, {
+			"path": "pages/devices/setting/index",
+			"style": {
+				"navigationStyle": "custom"
+			}
+		}, {
+			"path": "pages/mine/help/index",
+			"style": {
+				"navigationBarTitleText": "常见问题"
+			}
+		}, {
+			"path": "pages/mine/info/chooseImg",
+			"style": {
+				"navigationStyle": "custom"
+			}
+		},
+		// {
+		// 	"path": "pages/common/control/index",
+		// 	"style": {
+		// 		"navigationStyle": "custom"
+		// 	}
+		// },
+		{
+			"path": "pages/common/webview/index",
+			"style": {
+				"navigationBarTitleText": "浏览网页"
+			}
+		}, {
+			"path": "pages/common/textview/index",
+			"style": {
+				"navigationBarTitleText": "浏览文本"
+			}
+		}, {
+			"path": "pages/blemodule/searchble/index",
+			"style": {
+				"navigationStyle": "custom",
+				"enablePullDownRefresh": true
+			}
+		},{
+			"path": "pages/blemodule/index",
+			"style": {
+				"navigationStyle": "custom"
+			}
+		},{
+			"path": "pages/blemodule/bledeviceDetail/index",
+			"style": {
+				"navigationStyle": "custom"
+			}
+		},{
+			"path": "pages/blemodule/bledeviceDetail/ivy07index",
+			"style": {
+				"navigationStyle": "custom"
+			}
+		},{
+			"path": "pages/blemodule/bledeviceDetail/testindex",
+			"style": {
+				"navigationStyle": "custom"
+			}
+		},{
+			"path": "pages/blemodule/blepattern/testmaintain",
+			"style": {
+				"navigationStyle": "custom"
+			}
+		}
+	],
+	"tabBar": {
+		"color": "#999999",
+		"selectedColor": "#00CB74",
+		"borderStyle": "#999999",
+		"backgroundColor": "#ffffff",
+		"list": [{
+			"pagePath": "pages/index",
+			"iconPath": "static/images/tabbar/index.png",
+			"selectedIconPath": "static/images/tabbar/indexsel.png",
+			"text": "%index.home%"
+		}, {
+			"pagePath": "pages/mine/index",
+			"iconPath": "static/images/tabbar/my.png",
+			"selectedIconPath": "static/images/tabbar/mysel.png",
+			"text": "%index.mine%"
+		}]
+	},
+	"globalStyle": {
+		"navigationBarTextStyle": "black",
+		"navigationBarTitleText": "华韬移远模块香薰机",
+		"navigationBarBackgroundColor": "#FFFFFF"
+	}
+}

@@ -1,0 +1,33 @@
+{
+    "version" : "1",
+    "prompt" : "template",
+    "title" : "条款与声明",
+    "titleLocales" : {
+        "en" : "Terms and Statements",
+        "zh-Hans" : "条款与声明"
+    },
+    "message" : "请你务必审慎阅读、充分理解“隐私政策”各条款，包括但不限于：为支持搜索附近的智能设备，本应用会收集位置信息数据。即使本应用处于关闭或未使用状态，也仍会收集这类数据。<br/>　　你可阅读<a href=\"https://apps.all-iot.cn/zhengshuCN.html\">《隐私政策》</a>了解详细信息。如果你同意，请点击下面按钮开始接受我们的服务。",
+    "messageLocales" : {
+        "en" : "Please carefully read and fully understand the terms of the Privacy Policy, including but not limited to: to support searching for nearby smart devices, this application will collect location information data. Even if this application is closed or unused, this type of data will still be collected.<br/>　You can read<a href=\"https://www.ledup.com/decowonder-privacy-policy\">《隐私政策》</a>Learn more information.If you agree, please click the button below to start accepting our services。",
+        "zh-Hans" : "请你务必审慎阅读、充分理解“隐私政策”各条款，包括但不限于：为支持搜索附近的智能设备，本应用会收集位置信息数据。即使本应用处于关闭或未使用状态，也仍会收集这类数据。<br/>　　你可阅读<a href=\"https://apps.all-iot.cn/zhengshuCN.html\">《隐私政策》</a>了解详细信息。如果你同意，请点击下面按钮开始接受我们的服务。"
+    },
+    "buttonAccept" : "同意并接受",
+    "buttonAcceptLocales" : {
+        "en" : "Agree",
+        "zh-Hans" : "同意并接受"
+    },
+    "buttonRefuse" : "暂不同意",
+    "buttonRefuseLocales" : {
+        "en" : "Disagreet",
+        "zh-Hans" : "暂不同意"
+    },
+    "styles" : {
+        "borderRadius" : "5px"
+    },
+    "disagreeMode" : {
+        "support" : false,
+        "loadNativePlugins" : false,
+        "visitorEntry" : false,
+        "showAlways" : true
+    }
+}

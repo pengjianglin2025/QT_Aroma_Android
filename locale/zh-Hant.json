@@ -1,0 +1,23 @@
+{
+	"locale.auto": "系統",
+	"locale.zh-hans": "简体中文",
+	"locale.zh-hant": "繁體中文",
+	"locale.en": "English",
+
+	"index.home": "主頁",
+	"index.mine": "我的",
+	"index.all-device": "全部設備",
+	"index.device-group": "設備分組",
+	"index.scan": "掃碼",
+	"index.search": "搜索",
+	"index.open": "開",
+	"index.close": "關",
+	
+
+	"mine.language-settings": "語言設置",
+	"mine.about-us": "關於我們",
+	"mine.version": "版本號",
+	"mine.select-language": "選擇語言"
+
+
+}

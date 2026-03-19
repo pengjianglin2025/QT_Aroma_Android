@@ -1,0 +1,27 @@
+const getters = {
+  token: state => state.user.token,
+  avatar: state => state.user.avatar,
+  name: state => state.user.name,
+  roles: state => state.user.roles,
+  permissions: state => state.user.permissions,
+  searchBleList: state => state.device.searchBleList,
+  bleDeviceList: state => state.device.bleDeviceList,
+  workModelHexStr: state => state.device.workModelHexStr,
+  deviceId: state => state.device.deviceId,
+  isbleInit: state => state.device.isbleInit,
+  deviceName: state => state.device.deviceName,
+  businessCache: state => state.device.businessCache,
+  marks: state => state.device.marks,
+  isOffline: state => state.device.isOffline,
+  pauseTimeMin: state => state.device.pauseTimeMin,
+  pauseTimeMax: state => state.device.pauseTimeMax,
+  workTimeMin: state => state.device.workTimeMin,
+  workTimeMax: state => state.device.workTimeMax,
+  workStep: state => state.device.workStep,
+  parameterMode: state => state.ivy07.parameterMode,
+  gearNum: state => state.ivy07.gearNum,
+  simpleMode: state => state.ivy07.simpleMode,
+  curGear: state => state.ivy07.curGear,
+  testlogger: state => state.device.testlogger
+}
+export default getters
