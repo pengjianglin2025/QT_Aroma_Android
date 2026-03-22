@@ -82,6 +82,7 @@
 		queryLanguageList,
 		setCountryCode
 	} from '@/api/system/user.js'
+	import { fallbackNationalityList, normalizeNationalityList } from '@/utils/nationality.js'
 	export default {
 		components: {
 			Mypicker
@@ -165,8 +166,18 @@
 				let that = this
 				queryNationalityList().then(res => {
 					console.log(res);
-					that.nationalityList = res.data
-					// console.log(that.nationalityList);
+					const list = normalizeNationalityList(res)
+					that.nationalityList = list.length ? list : fallbackNationalityList
+					if(!that.loginForm.internationalCode && that.nationalityList.length){
+						that.seltctedCountry = that.nationalityList[0]
+						that.loginForm.internationalCode = that.nationalityList[0].internationalCode
+					}
+				}).catch(() => {
+					that.nationalityList = fallbackNationalityList
+					if(!that.loginForm.internationalCode && that.nationalityList.length){
+						that.seltctedCountry = that.nationalityList[0]
+						that.loginForm.internationalCode = that.nationalityList[0].internationalCode
+					}
 				})
 			},
 			//选择国家
@@ -303,19 +314,29 @@
 				})
 			},
 			visitorLogin() {
-				// uni.showToast({
-				// 	title: this.$t('not-open')
-				// })
+				if(!this.loginForm.internationalCode && this.nationalityList.length){
+					this.seltctedCountry = this.nationalityList[0]
+					this.loginForm.internationalCode = this.nationalityList[0].internationalCode
+				}
+				const phoneId = uni.getStorageSync('phoneId')
+				if(!phoneId){
+					this.$modal.msgError('phoneId缺失')
+					return false
+				}
 				if(!this.loginForm.internationalCode){
 					this.$modal.msgError(this.$t('select-country-area'))
 					return false
 				}
 				let para = {
-					username: uni.getStorageSync('phoneId'),
+					username: phoneId,
 					internationalCode: this.loginForm.internationalCode,
 					password: '123456'
 				}
 				console.log(para);
+				uni.showLoading({
+					mask:true,
+					title:''
+				})
 				register(para).then(res=>{
 					console.log(res);
 					uni.setStorageSync('auth_code',res.data) 
@@ -325,9 +346,20 @@
 					loginByAuthCode(para).then(res=>{
 						console.log(res);
 						if(res.success){
+							uni.hideLoading()
 							this.loginSuccess()
 						}
+					}).catch((err)=>{
+						console.log(err)
+						uni.hideLoading()
+						const message = (err && err.msg) || (err && err.data) || (typeof err === 'string' ? err : '')
+						this.$modal.msgError(message ? `游客登录失败：${message}` : '游客登录失败：授权码登录失败')
 					})
+				}).catch((err)=>{
+					console.log(err)
+					uni.hideLoading()
+					const message = (err && err.msg) || (err && err.data) || (typeof err === 'string' ? err : '')
+					this.$modal.msgError(message ? `游客登录失败：${message}` : '游客登录失败：注册失败')
 				})
 			},
 		}

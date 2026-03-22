@@ -10,7 +10,7 @@
 		</view>
 		<view v-if="deviceList.length>0">
 			<scroll-view class="devicelist-content" scroll-y="true" show-scrollbar>
-				<view v-for="(item,index) in deviceList" class="device-item2 mrtop">
+				<view v-for="(item,index) in deviceList" :key="item.mac || (item.bleDevice && item.bleDevice.mac) || index" class="device-item2 mrtop">
 					<view class="flex justify-between align-center">
 						<view class="flex align-center">
 							<div class="flex justify-center items-center" style="width: 152rpx;height: 152rpx;overflow: hidden;background-color: #37375A;">
@@ -118,7 +118,7 @@
 					</uni-row>
 				</view>
 				<view class="wifihisContent">
-					<view v-for="(item,index) in hisList" class="wifihisList">
+					<view v-for="(item,index) in hisList" :key="item.ssid || item.bssid || index" class="wifihisList">
 						<uni-row>
 							<uni-col :span="4">
 								{{index + 1}}

@@ -11,7 +11,7 @@
 	<view class="">
 		<scroll-view class="devicelist-content" scroll-y="true" show-scrollbar>
 			<view class="list-grid">
-				<view v-for="(item,index) in devicelist" class="device-item">
+				<view v-for="(item,index) in devicelist" :key="item.dk || item.deviceKey || index" class="device-item">
 					<view class="device-switch">
 						<view>
 							<!-- <image src="../../../static/off-light.png" mode="widthFix" style="width:88rpx;" class="img1"></image> -->
@@ -63,7 +63,7 @@
 			<!-- <div class="text-center gr-name">可添加设备列表</div> -->
 			<div class="text-center gr-name">{{$t('add-list')}}</div>
 			<scroll-view style="height: 50vh;" scroll-y="true" show-scrollbar>
-				<view class="flex justify-between items-center add-device-item" v-for="item in addDevicesList">
+				<view class="flex justify-between items-center add-device-item" v-for="item in addDevicesList" :key="item.dk || item.deviceKey || item.id">
 					<view style="width:69%;">
 						<div class="device-name">{{item.deviceName}}</div>
 						<div class="device-statetext">deviceId:{{item.deviceId}}</div>

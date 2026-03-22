@@ -57,11 +57,6 @@
 			</view>
 		</template>
 	</view>
-	<view class="disV" v-if="isOffline">
-		<view>
-			<view>{{$t('notconnect-tip')}}</view>
-		</view>
-	</view>
 </view>
 </template>
 
@@ -90,7 +85,15 @@ export default{
 			return flag
 		}
 	},
+	watch:{
+		workModelHexStr(val){
+			if(val){
+				this.getWorkModelList(val)
+			}
+		}
+	},
 	created() {
+		this.$store.commit('SET_OFFLINE',false)
 		console.log('模式参数=====',this.workModelHexStr);
 		this.getWorkModelList(this.workModelHexStr) //记得放开注释！！
 		const that = this;
@@ -98,6 +101,11 @@ export default{
 			console.log('监听到事件来自 updateWM ，携带参数 msg 为：' + data.msg);
 			console.log(data.msg);
 			that.getWorkModelList(data.msg)
+		})
+		uni.$on('bleWorkModelUpdated', function(data) {
+			if(data && data.hex){
+				that.getWorkModelList(data.hex)
+			}
 		})
 	},
 	methods:{

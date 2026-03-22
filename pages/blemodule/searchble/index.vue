@@ -1,6 +1,6 @@
-<template>
+﻿<template>
 <view>
-	<!-- 标题 -->
+	<!-- 鏍囬 -->
 	<view class="page-title temp-page-title">
 		<image class="back-icon" src="../../../static/back.png" @click="back"></image>
 		<div class="title-text">
@@ -9,7 +9,7 @@
 	</view>
 	<view v-if="searchBleList.length>0">
 		<scroll-view class="devicelist-content" scroll-y="true" show-scrollbar>
-			<view v-for="(item,index) in searchBleList" class="device-item2 mrtop">
+			<view v-for="(item,index) in searchBleList" :key="item.deviceId || item.mac || item.name || index" class="device-item2 mrtop">
 				<view class="flex justify-between align-center">
 					<view class="flex align-center" style="width: 75%;">
 						<div>
@@ -58,8 +58,8 @@ import { mapGetters } from 'vuex'
 export default{
 	data(){
 		return{
-			isrepeat: false ,//防止连接的时候重复点击
-			longtimeFlag: false,//长时间搜索不出设备提示刷新
+			isrepeat: false ,//闃叉杩炴帴鐨勬椂鍊欓噸澶嶇偣鍑?
+			longtimeFlag: false,//闀挎椂闂存悳绱笉鍑鸿澶囨彁绀哄埛鏂?
 		}
 	},
 	computed:{
@@ -73,14 +73,7 @@ export default{
 	},
 	onPullDownRefresh(e) {
 		this.showtips()
-		uni.closeBluetoothAdapter({
-			success(res) {
-			    console.log(res)
-				setTimeout(function () {
-					openBluetoothAdapter()
-				}, 1000);
-			}
-		})
+		openBluetoothAdapter()
 		setTimeout(function () {
 			uni.stopPullDownRefresh();
 		}, 1000);
@@ -101,11 +94,16 @@ export default{
 	},
 	onUnload() {
 		// stopBluetoothDevicesDiscovery()
-		uni.closeBluetoothAdapter()
 		this.$store.commit('SET_SEARCHBLELIST',[])
 	},
 	methods:{
-		//把设备添加到本地设备列表
+		getBleDetailUrl(deviceName, deviceId){
+			if((deviceName || '').indexOf('ivy07') > -1){
+				return `/pages/blemodule/bledeviceDetail/ivy07index?deviceId=${deviceId}&deviceName=${deviceName}`
+			}
+			return `/pages/blemodule/bledeviceDetail/index?deviceId=${deviceId}&deviceName=${deviceName}`
+		},
+		//鎶婅澶囨坊鍔犲埌鏈湴璁惧鍒楄〃
 		connectDevice(item){
 			console.log(item);
 			if(this.isrepeat){
@@ -113,8 +111,8 @@ export default{
 			}
 			let bleObj = {
 				deviceId: item.deviceId,
-				deviceName: item.name, //设备名称，修改这个不影响型号图片显示
-				localName: item.name,//本地名称，根据这个型号判断设备图片
+				deviceName: item.name, //璁惧鍚嶇О锛屼慨鏀硅繖涓笉褰卞搷鍨嬪彿鍥剧墖鏄剧ず
+				localName: item.name,//鏈湴鍚嶇О锛屾牴鎹繖涓瀷鍙峰垽鏂澶囧浘鐗?
 				data:''
 			}
 			// if(this.bleDeviceList.length>0){
@@ -123,20 +121,21 @@ export default{
 			// 	})
 			// 	if(idx>-1){
 			// 		// console.log(this.$modal);
-			// 		this.$modal.msg('已存在')
+			// 		this.$modal.msg('宸插瓨鍦?)
 			// 	}else{
 			// 		this.$store.commit('SET_BLEDEVICELIST',item)
 			// 	}
 			// }else{
 				this.$store.commit('SET_BLEDEVICELIST',bleObj)
 			// }
-			// stopBluetoothDevicesDiscovery()
-			uni.closeBluetoothAdapter()
+			stopBluetoothDevicesDiscovery()
 			this.$store.commit('SET_SEARCHBLELIST',[])
 			this.isrepeat = true
 			setTimeout(()=>{
-				console.log('页面跳转');
-				this.$tab.reLaunch('/pages/blemodule/index')
+				console.log('椤甸潰璺宠浆');
+				uni.navigateTo({
+					url: this.getBleDetailUrl(item.name, item.deviceId)
+				})
 			},500)
 		},
 		showtips(){
@@ -262,3 +261,6 @@ export default{
 		}
 	}
 </style>
+
+
+

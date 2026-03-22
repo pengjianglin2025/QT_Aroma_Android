@@ -1,6 +1,7 @@
 import upload from '@/utils/upload'
 import request from '@/utils/request'
-var userModule = uni.requireNativePlugin('XM-UserModule')
+import { fallbackNationalityList, normalizeNationalityList } from '@/utils/nationality.js'
+var userModule = typeof plus !== 'undefined' ? uni.requireNativePlugin('XM-UserModule') : null
 
 
 // 用户密码重置
@@ -59,9 +60,15 @@ export function updateUserNickName(para){
 //查询国家列表
 export function queryNationalityList(){
 	return new Promise((resolve,reject)=>{
+		if(!userModule || !userModule.queryNationalityList){
+			return resolve({ data: fallbackNationalityList })
+		}
 		userModule.queryNationalityList(res=>{
-			// console.log(res);
-			return resolve(res)
+			const list = normalizeNationalityList(res)
+			if(list.length){
+				return resolve({ ...res, data: list })
+			}
+			return resolve({ ...res, data: fallbackNationalityList })
 		})
 	})
 }

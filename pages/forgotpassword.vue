@@ -59,6 +59,7 @@
 		queryNationalityList,
 		setCountryCode
 	} from '@/api/system/user.js'
+	import { fallbackNationalityList, normalizeNationalityList } from '@/utils/nationality.js'
 	import {
 		sendPhoneSmsCode,
 		sendEmailCode,
@@ -110,7 +111,8 @@
 				let that = this
 				queryNationalityList().then(res => {
 					console.log(res);
-					that.nationalityList = res.data
+					const list = normalizeNationalityList(res)
+					that.nationalityList = list.length ? list : fallbackNationalityList
 					console.log(that.nationalityList);
 				})
 			},

@@ -1,6 +1,6 @@
 import request from '@/utils/request'
 import modal from '@/plugins/modal.js'
-var userModule = uni.requireNativePlugin('XM-UserModule')
+var userModule = typeof plus !== 'undefined' ? uni.requireNativePlugin('XM-UserModule') : null
 var platform
 uni.getSystemInfo({
 	success: function (res) {

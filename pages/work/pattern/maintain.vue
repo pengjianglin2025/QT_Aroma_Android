@@ -153,7 +153,7 @@
 		},
 		data() {
 			return {
-				title: this.$t('add-pattern'),
+				title: '',
 				pickTit:this.$t('tit-select-s'),
 				item: {},
 				selTimeIndex: '',
@@ -177,7 +177,7 @@
 		onLoad(e) {
 			this.devicemsg = e;
 			this.item = JSON.parse(e.itemStr);
-			this.title = this.item.pattern;
+			this.title = '';
 			this.selIndex = e.index;
 			this.$store.commit('SET_MARK','work_list')
 			console.log('暂停最小值',this.pauseTimeMin);

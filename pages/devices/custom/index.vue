@@ -9,12 +9,12 @@
 	</view>
 	<view class="flex justify-around items-center light-list">
 		<view class="text-center light-item" :style="{border: selectedlist.indexOf(item.id)>-1? '4rpx solid #FF784C':'', backgroundColor: selectedlist.indexOf(item.id)>-1&&setIdx == 1?  selectColor: item.bgColor}"
-		 v-for="item in lightList" @click="selectedLight(item)">{{item.name}}</view>
+		 v-for="(item,index) in lightList" :key="item.name || item.id || index" @click="selectedLight(item)">{{item.name}}</view>
 	</view>
 	<view v-if="setIdx==1">
 		<view class="usage-tips">Apply a color to the selected bulds：</view>
 		<view class="mrt-40 flex justify-center">
-			<view v-for="(item,index) in colorList" class="flex justify-center items-center ml-32 selected-border" :style="{border: colorIdx==index? '4rpx solid '+item.value:''}" @click="changeColor(index)">
+			<view v-for="(item,index) in colorList" :key="item.value || index" class="flex justify-center items-center ml-32 selected-border" :style="{border: colorIdx==index? '4rpx solid '+item.value:''}" @click="changeColor(index)">
 				<div class="color-radio" :style="{backgroundColor: item.value}"></div>
 			</view>
 		</view>

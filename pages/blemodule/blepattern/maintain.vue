@@ -126,11 +126,6 @@
 			<Mypicker :list="secondList"  @myselect="confirm2" searchKey='val' :title="$t('tit-select-s')" :showSearch="false" :currentSel="selValue" ref="picker2"></Mypicker>
 			<Mypicker :list="pauseList"  @myselect="confirm2" searchKey='val' :title="$t('tit-select-s')" :showSearch="false" :currentSel="selValue" ref="picker1"></Mypicker>
 		</view>
-		<view class="disV" v-if="isOffline">
-			<view>
-				<view>{{$t('notconnect-tip')}}</view>
-			</view>
-		</view>
 	</view>
 </template>
 
@@ -154,7 +149,7 @@
 		},
 		data() {
 			return {
-				title: this.$t('add-pattern'),
+				title: '',
 				item: {},
 				selTimeIndex: '',
 				selTimesIndex: '',
@@ -184,9 +179,10 @@
 			}
 		},
 		onLoad(e) {
+			this.$store.commit('SET_OFFLINE',false)
 			// this.devicemsg = e;
 			this.item = JSON.parse(e.itemStr);
-			this.title = this.item.pattern;
+			this.title = '';
 			this.selIndex = e.index;
 			console.log('暂停最小值',this.pauseTimeMin);
 			console.log('暂停最大值',this.pauseTimeMax);
@@ -242,6 +238,7 @@
 			// }
 		},
 		onShow() {
+			this.$store.commit('SET_OFFLINE',false)
 			console.log(this.is24hour);
 		},
 		onBackPress(options) { 

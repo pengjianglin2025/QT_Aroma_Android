@@ -1,5 +1,5 @@
 
-var configModule = uni.requireNativePlugin('XM-ConfigModule')
+var configModule = typeof plus !== 'undefined' ? uni.requireNativePlugin('XM-ConfigModule') : null
 import modal from '@/plugins/modal.js'
 
 //开始配网

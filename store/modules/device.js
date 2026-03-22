@@ -7,112 +7,116 @@ import { getToken, setToken, removeToken } from '@/utils/auth'
 const baseUrl = config.baseUrl
 
 const device = {
-	state:{
-		// colorList: storage.get(colorList)
-		deviceName:'',//当前进入界面的设备名称
-		bleDeviceList:uni.getStorageSync('bleDeviceList')? uni.getStorageSync('bleDeviceList'):[],//本地蓝牙设备列表
-		deviceId: '',//当前连接蓝牙的设备id
-		searchBleList:[], //搜索到的设备列表
-		// workModelHexStr:'',//工作模式16进制 007805000d3b01000a0005017f0000000001000a0078027b0200080001000a0078037f0200170000000a0078047903000f0701000a0078
-		workModelHexStr:'007805000d3b01000a0005017f0000000001000a0078027b0200080001000a0078037f0200170000000a0078047903000f0701000a0078',//工作模式16进制 
-		isbleInit: false,//蓝牙模块是否初始化，即有无进入过蓝牙搜索页面，进入过的话在蓝牙主页就不需要初始化。(若不加入这个判断，直接进入蓝牙主页的时候蓝牙没有初始化会连接失败，进入过搜索页面代表已经初始化过了)
-		businessCache: null,//当前设备属性列表缓存，在发送指令的时候缓存一下，配合 标识符 判断修改的是哪个指令，根据时间戳判断是否发生改变，若改变则不提示，否则提示 操作超时
-		marks: null,//标识符
-		isOffline: false,//设备是否处于离线状态
-		pauseTimeMin: 5, //暂停时间最小值
-		pauseTimeMax: 500, //暂停时间最大值
-		workTimeMin: 5, //工作时间最小值
-		workTimeMax: 500, //工作时间最大值
-		workStep: 5, //步长
-		is24hour: uni.getStorageSync('is24hour')|| 1, //时间是否为24小时制。1-24小时 2-12小时
-		testlogger:[] //给彭工提供的测试日志数组
+	state: {
+		deviceName: '',
+		bleDeviceList: uni.getStorageSync('bleDeviceList') ? uni.getStorageSync('bleDeviceList') : [],
+		deviceId: '',
+		searchBleList: [],
+		workModelHexStr: '007805000d3b01000a0005017f0000000001000a0078027b0200080001000a0078037f0200170000000a0078047903000f0701000a0078',
+		isbleInit: false,
+		businessCache: null,
+		marks: null,
+		isOffline: false,
+		pauseTimeMin: 5,
+		pauseTimeMax: 500,
+		workTimeMin: 5,
+		workTimeMax: 500,
+		workStep: 5,
+		parameterMode: 0,
+		gearNum: 5,
+		simpleMode: 0,
+		curGear: 1,
+		is24hour: uni.getStorageSync('is24hour') || 1,
+		testlogger: []
 	},
-	mutations:{
-		SET_TESTLOGGER(state,testlogger){
+	mutations: {
+		SET_TESTLOGGER(state, testlogger) {
 			state.testlogger = testlogger
 		},
-		SET_IS24HOUR(state,is24hour){
+		SET_IS24HOUR(state, is24hour) {
 			state.is24hour = is24hour
-			uni.setStorageSync('is24hour',is24hour)
+			uni.setStorageSync('is24hour', is24hour)
 		},
-		//设置暂停时间最小值
-		SET_PAUSETIMEMIN(state,pauseTimeMin){
+		SET_PAUSETIMEMIN(state, pauseTimeMin) {
 			state.pauseTimeMin = pauseTimeMin
-			console.log('暂停最小值',state.pauseTimeMin);
+			console.log('pause min', state.pauseTimeMin)
 		},
-		//设置暂停时间最大值
-		SET_PAUSETIMEMAX(state,pauseTimeMax){
+		SET_PAUSETIMEMAX(state, pauseTimeMax) {
 			state.pauseTimeMax = pauseTimeMax
-			console.log('暂停最大值',pauseTimeMax);
+			console.log('pause max', pauseTimeMax)
 		},
-		//设置工作时间最小值
-		SET_WORKTIMEMIN(state,workTimeMin){
-			console.log('工作最小值',workTimeMin);
+		SET_WORKTIMEMIN(state, workTimeMin) {
+			console.log('work min', workTimeMin)
 			state.workTimeMin = workTimeMin
 		},
-		//设置工作时间最大值
-		SET_WORKTIMEMAX(state,workTimeMax){
-			console.log('工作最大值',workTimeMax);
+		SET_WORKTIMEMAX(state, workTimeMax) {
+			console.log('work max', workTimeMax)
 			state.workTimeMax = workTimeMax
 		},
-		SET_WORKSTEP(state,workStep){
-			console.log('步长',workStep);
+		SET_WORKSTEP(state, workStep) {
+			console.log('work step', workStep)
 			state.workStep = workStep
 		},
-		SET_MARK(state,mark){
+		SET_PARAMETERMODE(state, parameterMode) {
+			state.parameterMode = parameterMode
+		},
+		SET_GEARNUM(state, gearNum) {
+			state.gearNum = gearNum
+		},
+		SET_SIMPLEMODE(state, simpleMode) {
+			state.simpleMode = simpleMode
+		},
+		SET_CURGEAR(state, curGear) {
+			state.curGear = curGear
+		},
+		SET_MARK(state, mark) {
 			state.marks = mark
 		},
-		SET_BUSINESSCACHE(state,businessCache){
+		SET_BUSINESSCACHE(state, businessCache) {
 			state.businessCache = businessCache
 		},
-		SET_BLEDEVICELIST(state,list){
-			console.log('接收到新的list......',list);
-			if(uni.getStorageSync('bleDeviceList')){
+		SET_BLEDEVICELIST(state, list) {
+			console.log('receive new ble device', list)
+			if (uni.getStorageSync('bleDeviceList')) {
 				state.bleDeviceList = uni.getStorageSync('bleDeviceList')
 			}
-			state.bleDeviceList.push(list) 
-			uni.setStorageSync('bleDeviceList',state.bleDeviceList)
-			// storage.set('bleDeviceList',state.bleDeviceList)
-			// state.bleDeviceList = list
-			// storage.set('bleDeviceList',list)
+			state.bleDeviceList.push(list)
+			uni.setStorageSync('bleDeviceList', state.bleDeviceList)
 		},
-		//移除蓝牙设备
-		DELETE_BLEDEVICELIST(state,bleDevId){
-			console.log(state.bleDeviceList);
-			let idx = state.bleDeviceList.findIndex(ite=>{
+		DELETE_BLEDEVICELIST(state, bleDevId) {
+			console.log(state.bleDeviceList)
+			let idx = state.bleDeviceList.findIndex(ite => {
 				return ite.deviceId === bleDevId
 			})
-			state.bleDeviceList.splice(idx,1)
-			uni.setStorageSync('bleDeviceList',state.bleDeviceList)
-			// console.log(idx);
-			// console.log(bleDevId);
+			state.bleDeviceList.splice(idx, 1)
+			uni.setStorageSync('bleDeviceList', state.bleDeviceList)
 		},
-		SET_SEARCHBLELIST(state,searchBleList){
-			console.log('搜索到的蓝牙设备列表......',searchBleList);
+		SET_SEARCHBLELIST(state, searchBleList) {
+			console.log('search ble list', searchBleList)
 			state.searchBleList = searchBleList
 		},
-		SET_MOMDELSTR(state,modelStr){
+		SET_MOMDELSTR(state, modelStr) {
 			state.workModelHexStr = modelStr
 		},
-		SET_DEVICEID(state,deviceId){
+		SET_DEVICEID(state, deviceId) {
 			state.deviceId = deviceId
 		},
-		SET_ISBLEINIT(state,isbleInit){
+		SET_ISBLEINIT(state, isbleInit) {
 			state.isbleInit = isbleInit
 		},
-		SET_DEVICENAME(state,deviceName){
-			console.log('我修改了名称');
+		SET_DEVICENAME(state, deviceName) {
+			console.log('update device name')
 			state.deviceName = deviceName
 		},
-		SET_OFFLINE(state,status){
-			console.log('修改状态被执行');
+		SET_OFFLINE(state, status) {
+			console.log('update offline status')
 			state.isOffline = status
 		}
 	},
-	actions:{
+	actions: {
 		SetState({ commit }, status) {
-			console.log('异步修改状态');
-		    commit('SET_OFFLINE', status)
+			console.log('async update offline status')
+			commit('SET_OFFLINE', status)
 		}
 	}
 }

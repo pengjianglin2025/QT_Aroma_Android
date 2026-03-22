@@ -180,5 +180,14 @@
 "timeshow": "Time display",
 "back": "Back",
 "everyday": "Every day",
-"openSwitchTip": "Please turn on the switch (get green)"
+"openSwitchTip": "Please turn on the switch (get green)",
+"connect-mode-wifi": "Current Connection: WiFi",
+"connect-mode-ble": "Current Connection: Bluetooth",
+"remain-time": "Remaining Time",
+"timer-off": "Timer Off",
+"simple-mode": "Simple Mode",
+"professional-mode": "Professional Mode",
+"timer-item-prefix": "Timer ",
+"timer-settings": "Timer Settings",
+"save": "Save"
 }

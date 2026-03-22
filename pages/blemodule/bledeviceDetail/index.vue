@@ -2,12 +2,12 @@
 	<view>
 		<uni-nav-bar fixed="true" :border="false" status-bar left-icon="left" right-icon="gear" :title="devName" @clickLeft="back" @clickRight="navitoSet"/>
 		<view v-if="warring" class="no-oil">
-			<!-- 缺油 -->{{$t('com.starvation')}}
+			<!-- 缂烘补 -->{{$t('com.starvation')}}
 		</view>
 		<view class="ttip" v-if="funEntity.oilState != 0 ">
 			<text>{{$t('estimated-use-time')}}:{{oilEntity.useDay}}{{$t('com.day')}} </text>
-			<!-- <text> | 工作:{{entity.workSec}}s</text>
-			<text> | 暂停:{{entity.pauseSec}} ></text> -->
+			<!-- <text> | 宸ヤ綔:{{entity.workSec}}s</text>
+			<text> | 鏆傚仠:{{entity.pauseSec}} ></text> -->
 		</view>
 		<view class="timg">
 			<!-- <image src="../../../static/circle-style.png" mode="heightFix" style="height:340rpx;"></image> -->
@@ -50,7 +50,7 @@
 			<view>
 				<uni-row>
 					<uni-col :span="6">
-						<view class="oilItem" @click="openOCPopup()">
+						<view class="oilItem">
 							<view>{{$t('oil-capacity')}}</view>
 							<view class="o2"><text class="oilTxt">{{oilEntity.capacity}}</text>ML</view>
 						</view>
@@ -59,7 +59,7 @@
 					<uni-col :span="6">
 						<view class="oilItem" @click="openCAPPopup()">
 							<view>{{$t('surplus-capacity')}}</view>
-							<view class="o2"><text class="oilTxt">{{oilEntity.remain}}</text>ML</view>
+							<view class="o2"><text class="oilTxt editableTxt">{{oilEntity.remain}}</text>ML</view>
 							<view class="lineV"></view>
 						</view>
 					</uni-col>
@@ -79,7 +79,7 @@
 								<image v-else-if="rssiNum<-60 && rssiNum>-85" src="../../../static/signa2.png" mode="aspectFit" style="width: 40rpx;height:40rpx;"></image>
 								<image v-else-if="rssiNum<-85" src="../../../static/signa1.png" mode="aspectFit" style="width: 40rpx;height:40rpx;"></image>
 								<image v-else src="../../../static/signa4.png" mode="aspectFit" style="width: 40rpx;height:40rpx;"></image> -->
-								<image v-if="!isOffline" src="@/static/bleon.png" mode="aspectFit" style="width: 40rpx;height:40rpx;"></image>
+								<image v-if="bleLinkActive" src="@/static/bleon.png" mode="aspectFit" style="width: 40rpx;height:40rpx;"></image>
 								<image v-else src="@/static/bleoff.png" mode="aspectFit" style="width: 40rpx;height:40rpx;"></image>
 							</view>
 							<view class="lineV"></view>
@@ -104,7 +104,7 @@
 				<view style="width:calc(50% - 10rpx);float: right;" @click="openOTPopup()">
 					<view>
 						<view>{{$t('oil-type')}}</view>
-						<view>{{typeEntity.oilType}}</view>
+						<view class="editableTxt">{{typeEntity.oilType}}</view>
 					</view>
 					<view style="display: flex;align-items: center;">
 						<image src="../../../static/oil.png" mode="heightFix" style="height:50rpx;"></image>
@@ -186,12 +186,12 @@
 			</uni-row>
 		</view>
 		<!-- <view class="">
-			<div>蓝牙是否有上报下列值: {{bleHasreport==true? '是':'否'}}</div>
-			<div>最小工作时间: {{workTimeMin}}</div>
-			<div>最大工作时间: {{workTimeMax}}</div>
-			<div>最小暂停时间: {{pauseTimeMin}}</div>
-			<div>最大暂停时间: {{pauseTimeMax}}</div>
-			<div>步长: {{workStep}}</div>
+			<div>钃濈墮鏄惁鏈変笂鎶ヤ笅鍒楀€? {{bleHasreport==true? '鏄?:'鍚?}}</div>
+			<div>鏈€灏忓伐浣滄椂闂? {{workTimeMin}}</div>
+			<div>鏈€澶у伐浣滄椂闂? {{workTimeMax}}</div>
+			<div>鏈€灏忔殏鍋滄椂闂? {{pauseTimeMin}}</div>
+			<div>鏈€澶ф殏鍋滄椂闂? {{pauseTimeMax}}</div>
+			<div>姝ラ暱: {{workStep}}</div>
 		</view> -->
 		<view style="text-align: center;margin-top: 80rpx;">
 			<image :src="switchSelected == true? '../../../static/switch.png':'../../../static/switch1.png'" mode="heightFix" style="height:120rpx;" @click="handleControl"></image>
@@ -282,7 +282,7 @@
 				</view>
 			</view>
 		</uni-popup>
-		<view class="disV" v-if="isOffline">
+		<view class="disV" v-if="isOffline && !isConnecting && !isReconnecting">
 			<view>
 				<view>{{$t('notconnect-tip')}}</view>
 			</view>
@@ -317,7 +317,7 @@
 					realityConsumption: 20
 				},
 				typeEntity: {
-					workModel: this.$t('com.pattern'),
+					workModel: this.$t('work-pattern'),
 					oilType: this.$t('oil-type'),
 				},
 				selEntity: {
@@ -334,7 +334,7 @@
 				canWm: true,
 				wmList: [],
 				selectedIndex: -1,
-				devicemsg: {}, //设备信息：pk，dk
+				devicemsg: {}, //璁惧淇℃伅锛歱k锛宒k
 				title: this.$t('aramis-control'),
 				switchSelected: false,
 				deviceModel: {},
@@ -348,21 +348,27 @@
 				},
 				bleDeviceId:'',
 				timeData:'',
-				warring: false,//精油报警
-				oilConditionHex:'',//油状态16进制
-				platform: uni.getStorageSync('platform'), //平台
-				rssiNum: null,//信号值
+				warring: false,//绮炬补鎶ヨ
+				oilConditionHex:'',//娌圭姸鎬?6杩涘埗
+				platform: uni.getStorageSync('platform'), //骞冲彴
+				rssiNum: null,//淇″彿鍊?
 				rssiTimer: null,
+				reconnectTimer: null,
+				isLeavingPage: false,
+				isConnecting: false,
+				isReconnecting: false,
+				bleLinkActive: false,
+				listenersReady: false,
 				errorCode:'',
 				bleHasreport: false,
-				updateModeTimer: null, //当前模式心跳包
+				updateModeTimer: null, //褰撳墠妯″紡蹇冭烦鍖?
 				curModeMsg:{}
-				// curModeMsg:{ //当前启用模式的信息
-				// 	modeNum: 1, //模式几
-				// 	btime: '', //开始时间
-				// 	etime: '', //结束时间
-				// 	wtimes: '', //工作时间
-				// 	ptimes :'', //暂停时间
+				// curModeMsg:{ //褰撳墠鍚敤妯″紡鐨勪俊鎭?
+				// 	modeNum: 1, //妯″紡鍑?
+				// 	btime: '', //寮€濮嬫椂闂?
+				// 	etime: '', //缁撴潫鏃堕棿
+				// 	wtimes: '', //宸ヤ綔鏃堕棿
+				// 	ptimes :'', //鏆傚仠鏃堕棿
 				// }
 			}
 		},
@@ -389,20 +395,29 @@
 			// }
 			// this.filterCurModeMsg('001f0a140d3b01000a0005017f03000f0001000a0078027f0000000001000a0078037f0000000001000a0078047f0000000001000a0078')
 			this.bleHasreport = false
+			this.isLeavingPage = false
+			this.isConnecting = false
+			this.bleLinkActive = false
+			this.$store.commit('SET_OFFLINE',false)
 			this.bleDeviceId = e.deviceId
 			this.getTimeData()
+			this.ensureBleListeners()
 			this.connetDevice(this.bleDeviceId)
-			this.characteristicValueChange()
-			this.checkConnetState()
 			uni.showLoading({
 				mask: true
 			})
 		},
 		onUnload() {
+			this.isLeavingPage = true
+			this.isConnecting = false
+			this.bleLinkActive = false
+			this.clearReconnectTimer()
+			this.teardownBleListeners()
 			clearInterval(this.rssiTimer)
 			this.rssiTimer = null
-			// this.closeble(this.bleDeviceId)
-			uni.closeBluetoothAdapter()
+			if(this.bleDeviceId){
+				this.closeble(this.bleDeviceId)
+			}
 		},
 		onShow() {
 			this.getOilTypeValue()
@@ -423,56 +438,115 @@
 			}
 		},
 		methods: {
+			getDetailSnapshotKey(){
+				return `bleDetailSnapshot_${this.bleDeviceId || ''}`
+			},
+			restoreDetailSnapshot(){
+				if(!this.bleDeviceId){
+					return
+				}
+				const snapshot = uni.getStorageSync(this.getDetailSnapshotKey())
+				if(!snapshot){
+					return
+				}
+				if(snapshot.oilEntity){
+					this.oilEntity = snapshot.oilEntity
+				}
+				if(snapshot.selEntity){
+					this.selEntity = snapshot.selEntity
+				}
+				if(snapshot.funEntity){
+					this.funEntity = snapshot.funEntity
+				}
+				if(snapshot.curModeMsg){
+					this.curModeMsg = snapshot.curModeMsg
+				}
+				if(typeof snapshot.switchSelected === 'boolean'){
+					this.switchSelected = snapshot.switchSelected
+				}
+				if(typeof snapshot.warring === 'boolean'){
+					this.warring = snapshot.warring
+				}
+				if(typeof snapshot.currentState === 'number'){
+					this.currentState = snapshot.currentState
+				}
+				if(typeof snapshot.countdownNum === 'number'){
+					this.countdownNum = snapshot.countdownNum
+				}
+				if(typeof snapshot.maxWorktime === 'number'){
+					this.maxWorktime = snapshot.maxWorktime
+				}
+				if(typeof snapshot.maxPausetime === 'number'){
+					this.maxPausetime = snapshot.maxPausetime
+				}
+			},
+			saveDetailSnapshot(){
+				if(!this.bleDeviceId){
+					return
+				}
+				uni.setStorageSync(this.getDetailSnapshotKey(), {
+					oilEntity: this.oilEntity,
+					selEntity: this.selEntity,
+					funEntity: this.funEntity,
+					switchSelected: this.switchSelected,
+					warring: this.warring,
+					currentState: this.currentState,
+					countdownNum: this.countdownNum,
+					maxWorktime: this.maxWorktime,
+					maxPausetime: this.maxPausetime,
+					curModeMsg: this.curModeMsg
+				})
+			},
 			change12H(time){
 				console.log(time);
 				const Hours = time.split(':')[0]
 				let newHour = Hours<=12? Hours: (Number(Hours)-12).toString().padStart(2,'0')
 				if(newHour == 0){
-					newHour = '12' //凌晨12点
+					newHour = '12' //鍑屾櫒12鐐?
 				}
 				return newHour+':'+time.split(':')[1]
 			},
-			//筛选出当前执行的定时模式
+			//绛涢€夊嚭褰撳墠鎵ц鐨勫畾鏃舵ā寮?
 			filterCurModeMsg(hexStr){
 				const nowDate = new Date()
 				let nowDate2 = new Date()
-				const curH = nowDate.getHours() //当前小时
-				const curM = nowDate.getMinutes() //当前分钟
-				const days = nowDate.getDay() //周几
+				const curH = nowDate.getHours() //褰撳墠灏忔椂
+				const curM = nowDate.getMinutes() //褰撳墠鍒嗛挓
+				const days = nowDate.getDay() //鍛ㄥ嚑
 				console.log(curH);
 				console.log(curM);
-				const curMin = Number(curH)*60+Number(curM) //统一把当前的时间小时转换为分钟
+				const curMin = Number(curH)*60+Number(curM) //缁熶竴鎶婂綋鍓嶇殑鏃堕棿灏忔椂杞崲涓哄垎閽?
 				console.log(curMin);
-				let isSet = false //判断是否存在全部定时器未开启的情况
-				let modeList = []; //当前工作中模式的列表
-				let nextModeList = [] //下次个执行的模式数据。比如2组定时都开启了,时间分别为 组一(9:00-10:00) 组二(12:00-13:00),当前时间为11:30,则需要把组2的数据先显示出来,因为未到时间所以频率都为0
-				let defaultList = [] //第二天的定时数据。如果当前时间没有符合条件的定时（今天的定时器都执行完毕），则默认显示第一条定时（第二天最早的一条定时）
+				let isSet = false //鍒ゆ柇鏄惁瀛樺湪鍏ㄩ儴瀹氭椂鍣ㄦ湭寮€鍚殑鎯呭喌
+				let modeList = []; //褰撳墠宸ヤ綔涓ā寮忕殑鍒楄〃
+				let nextModeList = [] //涓嬫涓墽琛岀殑妯″紡鏁版嵁銆傛瘮濡?缁勫畾鏃堕兘寮€鍚簡,鏃堕棿鍒嗗埆涓?缁勪竴(9:00-10:00) 缁勪簩(12:00-13:00),褰撳墠鏃堕棿涓?1:30,鍒欓渶瑕佹妸缁?鐨勬暟鎹厛鏄剧ず鍑烘潵,鍥犱负鏈埌鏃堕棿鎵€浠ラ鐜囬兘涓?
+				let defaultList = [] //绗簩澶╃殑瀹氭椂鏁版嵁銆傚鏋滃綋鍓嶆椂闂存病鏈夌鍚堟潯浠剁殑瀹氭椂锛堜粖澶╃殑瀹氭椂鍣ㄩ兘鎵ц瀹屾瘯锛夛紝鍒欓粯璁ゆ樉绀虹涓€鏉″畾鏃讹紙绗簩澶╂渶鏃╃殑涓€鏉″畾鏃讹級
 				const byteArr = this.hexToBytes(hexStr);
 				const groupSize = byteArr.length / 11;
 				let sTime = ''
 				for (let n = 0; n < groupSize; n++) {
-					const p1 = byteArr[11 * n]; // Pl:模式标志(分别代表五个模式:0-4)
-					const p2 = byteArr[11 * n + 1]; // P2:为该模式工作日b0~b6表示周一至周日
-					const p3 = byteArr[11 * n + 2]; // P3,P4: 起始时间、小时分钟
+					const p1 = byteArr[11 * n]; // Pl:妯″紡鏍囧織(鍒嗗埆浠ｈ〃浜斾釜妯″紡:0-4)
+					const p2 = byteArr[11 * n + 1]; // P2:涓鸿妯″紡宸ヤ綔鏃0~b6琛ㄧず鍛ㄤ竴鑷冲懆鏃?
+					const p3 = byteArr[11 * n + 2]; // P3,P4: 璧峰鏃堕棿銆佸皬鏃跺垎閽?
 					const p4 = byteArr[11 * n + 3];
-					const p5 = byteArr[11 * n + 4]; // P5,P6: 结束时间、小时分钟
+					const p5 = byteArr[11 * n + 4]; // P5,P6: 缁撴潫鏃堕棿銆佸皬鏃跺垎閽?
 					const p6 = byteArr[11 * n + 5];
-					const p7 = byteArr[11 * n + 6]; // P7: 控制开关0关闭，1打开
-					const p8 = byteArr[11 * n + 7]; // P8，P9:工作时间，P8低八位，P9是高八位
+					const p7 = byteArr[11 * n + 6]; // P7: 鎺у埗寮€鍏?鍏抽棴锛?鎵撳紑
+					const p8 = byteArr[11 * n + 7]; // P8锛孭9:宸ヤ綔鏃堕棿锛孭8浣庡叓浣嶏紝P9鏄珮鍏綅
 					const p9 = byteArr[11 * n + 8];
-					const p10 = byteArr[11 * n + 9]; // P10,P11:停止时间，P10低八位，P11是高八位
+					const p10 = byteArr[11 * n + 9]; // P10,P11:鍋滄鏃堕棿锛孭10浣庡叓浣嶏紝P11鏄珮鍏綅
 					const p11 = byteArr[11 * n + 10];
 					
 					console.log('p2==========>',p2);
-					const hasInWeekend = this.hasInWeekendTime(p2,days) //今天（周几）是否有开启定时
+					const hasInWeekend = this.hasInWeekendTime(p2,days) //浠婂ぉ锛堝懆鍑狅級鏄惁鏈夊紑鍚畾鏃?
 				
 					const model = {
 						pattern: this.$t('com.pattern') + (p1 + 1).toString(),
 						selected: (p7 == 1 ? true : false),
 						btime: p3.toString().padStart(2,'0') + ':' + p4.toString().padStart(2,'0'),
 						etime: p5.toString().padStart(2,'0') + ':' + p6.toString().padStart(2,'0'),
-						bmin: Number(p3)*60+Number(p4), //时转换为分
-						emin: Number(p5)*60+Number(p6), //时转换为分
+						bmin: Number(p3)*60+Number(p4), //鏃惰浆鎹负鍒?
+						emin: Number(p5)*60+Number(p6), //鏃惰浆鎹负鍒?
 						wtimes: this.getIntegerValue(p9, p8),
 						ptimes: this.getIntegerValue(p11, p10),
 					}
@@ -482,7 +556,7 @@
 					// if(defaultList.length==0){
 					if(model.bmin!=model.emin && p7 == 1){
 						// const tomorrowDays = Number(days)+1 ==7? 0:Number(days)+1
-						// const hasIntomorrow = this.hasInWeekendTime(p2,tomorrowDays) //查询明天是否包含该定时
+						// const hasIntomorrow = this.hasInWeekendTime(p2,tomorrowDays) //鏌ヨ鏄庡ぉ鏄惁鍖呭惈璇ュ畾鏃?
 						// console.log('hasIntomorrow==>',hasIntomorrow);
 						// if(hasIntomorrow){
 							const model2 = {
@@ -490,8 +564,8 @@
 								pattern: this.$t('com.pattern') + (p1 + 1).toString(),
 								btime: p3.toString().padStart(2,'0') + ':' + p4.toString().padStart(2,'0'),
 								etime: p5.toString().padStart(2,'0') + ':' + p6.toString().padStart(2,'0'),
-								bmin: Number(p3)*60+Number(p4), //时转换为分
-								emin: Number(p5)*60+Number(p6), //时转换为分
+								bmin: Number(p3)*60+Number(p4), //鏃惰浆鎹负鍒?
+								emin: Number(p5)*60+Number(p6), //鏃惰浆鎹负鍒?
 								wtimes: 0,
 								ptimes: 0,
 							}
@@ -500,13 +574,13 @@
 					}
 					
 					if(p7 == 1 && hasInWeekend && model.bmin!=model.emin){
-						//1、定时是否开启 
+						//1銆佸畾鏃舵槸鍚﹀紑鍚?
 						
 						// if(p7 == 1 && curMin>model.bmin&& curMin<model.emin ){
 								
 						console.log(model.btime);
 						if(model.bmin<=curMin && model.emin>=curMin){
-							//2、定时开始时间必须小于等于当前时间 3、结束时间必须大于等于当前时间
+							//2銆佸畾鏃跺紑濮嬫椂闂村繀椤诲皬浜庣瓑浜庡綋鍓嶆椂闂?3銆佺粨鏉熸椂闂村繀椤诲ぇ浜庣瓑浜庡綋鍓嶆椂闂?
 							modeList.push(model);
 						}else if(model.bmin>=curMin){
 							model.wtimes = 0
@@ -517,31 +591,31 @@
 				}
 				console.log(nextModeList);
 				if(modeList.length>0){
-					// 当前是否有满足条件的定时开启
-					// 按开始时间排序
+					// 褰撳墠鏄惁鏈夋弧瓒虫潯浠剁殑瀹氭椂寮€鍚?
+					// 鎸夊紑濮嬫椂闂存帓搴?
 					// modeList.sort((a, b) => a.bmin - b.emin);
 					// console.log(modeList);
-					console.log('==========正常情况显示==========');
+					console.log('==========姝ｅ父鎯呭喌鏄剧ず==========');
 					console.log(modeList[0]);
 					this.curModeMsg = modeList[0]
 				}else{
-					// 是否满足后面时间还有未开启的定时器
+					// 鏄惁婊¤冻鍚庨潰鏃堕棿杩樻湁鏈紑鍚殑瀹氭椂鍣?
 					if(nextModeList.length>0){
-						console.log('==========后面还有开始的定时器，这个时间点之前的定时器已经执行完。目前处于等待状态==========');
+						console.log('==========鍚庨潰杩樻湁寮€濮嬬殑瀹氭椂鍣紝杩欎釜鏃堕棿鐐逛箣鍓嶇殑瀹氭椂鍣ㄥ凡缁忔墽琛屽畬銆傜洰鍓嶅浜庣瓑寰呯姸鎬?=========');
 						nextModeList.sort((a, b) => a.bmin - b.bmin);
 						this.curModeMsg = nextModeList[0]
 					}else{
 						if(isSet){
-							// 如果不满足以上条件则说明今日的定时器已经全部执行完成，把第一次开启的定时器作为明天的定时显示（已废弃）
-							// 如果不满足以上条件则说明今日的定时器已经全部执行完成，defaultList数组内会排除掉关闭的定时和两个时间相同的定时，在这里处理星期和时间的排序
+							// 濡傛灉涓嶆弧瓒充互涓婃潯浠跺垯璇存槑浠婃棩鐨勫畾鏃跺櫒宸茬粡鍏ㄩ儴鎵ц瀹屾垚锛屾妸绗竴娆″紑鍚殑瀹氭椂鍣ㄤ綔涓烘槑澶╃殑瀹氭椂鏄剧ず锛堝凡搴熷純锛?
+							// 濡傛灉涓嶆弧瓒充互涓婃潯浠跺垯璇存槑浠婃棩鐨勫畾鏃跺櫒宸茬粡鍏ㄩ儴鎵ц瀹屾垚锛宒efaultList鏁扮粍鍐呬細鎺掗櫎鎺夊叧闂殑瀹氭椂鍜屼袱涓椂闂寸浉鍚岀殑瀹氭椂锛屽湪杩欓噷澶勭悊鏄熸湡鍜屾椂闂寸殑鎺掑簭
 							if(defaultList.length>0){
-								// 先按照星期日期排序
+								// 鍏堟寜鐓ф槦鏈熸棩鏈熸帓搴?
 								console.log(this.sortByNearestAvailableDay(defaultList));
 								const defaultFilterList = this.sortByNearestAvailableDay(defaultList)
 								if(defaultFilterList.length>0){
 									this.curModeMsg = defaultFilterList[0]
 								}else{
-									//虽然定时器开关打开了，但是每一天都为关闭的状态（周定时）
+									//铏界劧瀹氭椂鍣ㄥ紑鍏虫墦寮€浜嗭紝浣嗘槸姣忎竴澶╅兘涓哄叧闂殑鐘舵€侊紙鍛ㄥ畾鏃讹級
 									this.curModeMsg = {
 										wtimes:0,
 										ptimes:0
@@ -553,8 +627,8 @@
 							// console.log(JSON.stringify(defaultList));
 							
 						}else{
-							console.log('==========全部定时器都关闭==========');
-							//全部定时器未开启的情况
+							console.log('==========鍏ㄩ儴瀹氭椂鍣ㄩ兘鍏抽棴==========');
+							//鍏ㄩ儴瀹氭椂鍣ㄦ湭寮€鍚殑鎯呭喌
 							this.curModeMsg = {
 								wtimes:0,
 								ptimes:0
@@ -565,20 +639,20 @@
 				
 			},
 			sortByNearestAvailableDay(data) {
-			  // 获取今天是星期几（0=周日, 6=周六）
+			  // 鑾峰彇浠婂ぉ鏄槦鏈熷嚑锛?=鍛ㄦ棩, 6=鍛ㄥ叚锛?
 			  const today = new Date().getDay();
 			  let targetDay = today;
 			  let num = 0
 			  while (true) {
 				if(num < 8){
-			    // 检查当前目标日期是否有效（0-6）
+			    // 妫€鏌ュ綋鍓嶇洰鏍囨棩鏈熸槸鍚︽湁鏁堬紙0-6锛?
 			    if (targetDay < 0) targetDay = 6;
 			    if (targetDay > 6) targetDay = 0;
 			    
-			    // 查找匹配当前目标日期的数据
+			    // 鏌ユ壘鍖归厤褰撳墠鐩爣鏃ユ湡鐨勬暟鎹?
 			    const availableData = data.filter(item => item.week[targetDay] === '1');
 			    
-			    // 如果找到数据，则按btime排序
+			    // 濡傛灉鎵惧埌鏁版嵁锛屽垯鎸塨time鎺掑簭
 			    if (availableData.length > 0) {
 			      return availableData.sort((a, b) => {
 			        const timeA = a.btime.split(':').map(Number);
@@ -587,7 +661,7 @@
 			      });
 			    }
 			    
-			    // 如果没有找到数据，继续检查下一个日期
+			    // 濡傛灉娌℃湁鎵惧埌鏁版嵁锛岀户缁鏌ヤ笅涓€涓棩鏈?
 				num++
 			    targetDay = (targetDay + 1) % 7;
 				}else{
@@ -595,12 +669,12 @@
 				}
 			  }
 			},
-			//判断定时在今天有无开启
+			//鍒ゆ柇瀹氭椂鍦ㄤ粖澶╂湁鏃犲紑鍚?
 			hasInWeekendTime(timeData,week){
-				//这个辅助函数通过今天是周几作为下标，看看对应数组内的值是0还是1，为0则关闭，为1则开启
-				// timeData为10进制的数字，用bit判断周几有定时; week:周几 0-7，0为周日
-				const timeStr = timeData.toString(2).padStart(7,'0') //补齐7天数据
-				const timeList = timeStr.split('').reverse() //数组格式且周一到周日顺序排列
+				//杩欎釜杈呭姪鍑芥暟閫氳繃浠婂ぉ鏄懆鍑犱綔涓轰笅鏍囷紝鐪嬬湅瀵瑰簲鏁扮粍鍐呯殑鍊兼槸0杩樻槸1锛屼负0鍒欏叧闂紝涓?鍒欏紑鍚?
+				// timeData涓?0杩涘埗鐨勬暟瀛楋紝鐢╞it鍒ゆ柇鍛ㄥ嚑鏈夊畾鏃? week:鍛ㄥ嚑 0-7锛?涓哄懆鏃?
+				const timeStr = timeData.toString(2).padStart(7,'0') //琛ラ綈7澶╂暟鎹?
+				const timeList = timeStr.split('').reverse() //鏁扮粍鏍煎紡涓斿懆涓€鍒板懆鏃ラ『搴忔帓鍒?
 				let weekidx = week==0? 6:Number(week)-1
 				const hasToday = timeList[weekidx]==0? false:true
 				return hasToday
@@ -611,7 +685,7 @@
 				this.capTypeValue= value.replace(/[^\d]/g, "");
 				this.$forceUpdate()
 			},
-			// 获取在蓝牙模块生效期间所有已发现的蓝牙设备。包括已经和本机处于连接状态的设备。获取实时信号
+			// 鑾峰彇鍦ㄨ摑鐗欐ā鍧楃敓鏁堟湡闂存墍鏈夊凡鍙戠幇鐨勮摑鐗欒澶囥€傚寘鎷凡缁忓拰鏈満澶勪簬杩炴帴鐘舵€佺殑璁惧銆傝幏鍙栧疄鏃朵俊鍙?
 			getBleRSSI(){
 				let _this = this
 				uni.getBLEDeviceRSSI({
@@ -629,37 +703,37 @@
 			},
 			getTimeData(){
 				let nowDate = new Date()
-				let week = nowDate.getDay() //周几（0-6）
-				if(week == 0){ //适配文档(1-7代表周一至周日)
+				let week = nowDate.getDay() //鍛ㄥ嚑锛?-6锛?
+				if(week == 0){ //閫傞厤鏂囨。(1-7浠ｈ〃鍛ㄤ竴鑷冲懆鏃?
 					week = 7
 				}
 				let nowyear = nowDate.getFullYear()
 				let yearStr = +nowyear - 2000
-				let yearHex = Number(yearStr).toString(16)//年16进制
+				let yearHex = Number(yearStr).toString(16)//骞?6杩涘埗
 				if(yearHex.length<2){
 					yearHex = '0'+yearHex
 				}
-				let monthHex = (nowDate.getMonth()+1).toString(16)//月16进制
+				let monthHex = (nowDate.getMonth()+1).toString(16)//鏈?6杩涘埗
 				if(monthHex.length<2){
 					monthHex = '0'+monthHex
 				}
-				let dayHex = nowDate.getDate().toString(16)//日16进制
+				let dayHex = nowDate.getDate().toString(16)//鏃?6杩涘埗
 				if(dayHex.length<2){
 					dayHex = '0'+dayHex
 				}
-				let hourHex = nowDate.getHours().toString(16)//小时16进制
+				let hourHex = nowDate.getHours().toString(16)//灏忔椂16杩涘埗
 				if(hourHex.length<2){
 					hourHex = '0'+hourHex
 				}
-				let minuteHex = nowDate.getMinutes().toString(16)//分钟16进制
+				let minuteHex = nowDate.getMinutes().toString(16)//鍒嗛挓16杩涘埗
 				if(minuteHex.length<2){
 					minuteHex = '0'+minuteHex
 				}
-				let secondHex = (Number(nowDate.getSeconds())+2).toString(16)//秒16进制
+				let secondHex = (Number(nowDate.getSeconds())+2).toString(16)//绉?6杩涘埗
 				if(secondHex.length<2){
 					secondHex = '0'+secondHex
 				}
-				let weekHex = week.toString(16) //周几16进制
+				let weekHex = week.toString(16) //鍛ㄥ嚑16杩涘埗
 				if(weekHex.length<2){
 					weekHex = '0'+weekHex
 				}
@@ -675,36 +749,75 @@
 				  }
 				})
 			},
-			connetDevice(deviceId){//连接设备
+			connetDevice(deviceId){//杩炴帴璁惧
 				let _this = this
-				uni.createBLEConnection({
-					timeout: 5000,
-					deviceId,
-					success: res => {
-						console.log(res);
-						console.log('连接蓝牙成功:' + res.errMsg);
-						setTimeout(()=>{
-							if(this.platform == 'android'){ 
-								_this.setMtu(deviceId)
-							}else{
-								_this.getServices(deviceId)
+				if(_this.isLeavingPage || _this.isConnecting || !deviceId){
+					return
+				}
+				_this.isConnecting = true
+				_this.clearReconnectTimer()
+				uni.openBluetoothAdapter({
+					success() {
+						uni.createBLEConnection({
+							timeout: 5000,
+							deviceId,
+							success: res => {
+								console.log(res);
+								console.log('杩炴帴钃濈墮鎴愬姛:' + res.errMsg);
+								_this.isConnecting = false
+								_this.isReconnecting = false
+								_this.bleLinkActive = true
+								_this.$store.commit('SET_OFFLINE',false)
+								_this.errorCode = ''
+								setTimeout(()=>{
+									if(_this.platform == 'android'){ 
+										_this.setMtu(deviceId)
+									}else{
+										_this.getServices(deviceId)
+									}
+								},600)
+							},
+							fail: e => {
+								console.log('杩炴帴浣庡姛鑰楄摑鐗欏け璐ワ紝閿欒鐮侊細' + e.errCode); 
+								_this.isConnecting = false
+								if (e.errCode !== 0) {
+									uni.hideLoading()
+									_this.bleLinkActive = false
+									_this.$store.commit('SET_OFFLINE',true)
+									_this.errorCode = e.errCode
+									_this.scheduleReconnect()
+								}
 							}
-							// _this.rssiTimer = setInterval(()=>{
-							// 	_this.getBleRSSI()
-							// },3000)
-						},2000)
+						})
 					},
 					fail: e => {
-						console.log('连接低功耗蓝牙失败，错误码：' + e.errCode); 
-						if (e.errCode !== 0) {
-							uni.hideLoading()
-							// _this.isOffline = true;
-							_this.$store.commit('SET_OFFLINE',true)
-							_this.errorCode = e.errCode
-							// initTypes(e.errCode);
-						}
+						console.log('openBluetoothAdapter fail:' + e.errCode)
+						_this.isConnecting = false
+						_this.bleLinkActive = false
+						_this.$store.commit('SET_OFFLINE',true)
+						_this.errorCode = e.errCode
+						_this.scheduleReconnect()
 					}
 				})
+			},
+			clearReconnectTimer(){
+				if(this.reconnectTimer){
+					clearTimeout(this.reconnectTimer)
+					this.reconnectTimer = null
+				}
+			},
+			scheduleReconnect(){
+				if(this.isLeavingPage || !this.bleDeviceId || this.reconnectTimer || this.isConnecting){
+					return
+				}
+				this.isReconnecting = true
+				this.reconnectTimer = setTimeout(()=>{
+					this.reconnectTimer = null
+					if(this.isLeavingPage){
+						return
+					}
+					this.connetDevice(this.bleDeviceId)
+				}, 800)
 			},
 			setMtu(deviceId){
 				let _this = this
@@ -712,10 +825,10 @@
 					console.log('succ====>',sue);
 					setTimeout(()=>{
 						_this.getServices(deviceId)
-					},1500)
+					},400)
 				}})
 			},
-			getServices(deviceId){//获取蓝牙设备所有服务
+			getServices(deviceId){//鑾峰彇钃濈墮璁惧鎵€鏈夋湇鍔?
 				let _this = this
 				uni.getBLEDeviceServices({
 				  deviceId,
@@ -728,14 +841,14 @@
 			},
 			getValueChange(deviceId){
 				let _this = this
-				//找到型号为K5-BTS的设备
+				//鎵惧埌鍨嬪彿涓篕5-BTS鐨勮澶?
 				uni.notifyBLECharacteristicValueChange({
-				  state: true, // 启用 notify 功能
-				  // 这里的 deviceId 需要已经通过 createBLEConnection 与对应设备建立链接
+				  state: true, // 鍚敤 notify 鍔熻兘
+				  // 杩欓噷鐨?deviceId 闇€瑕佸凡缁忛€氳繃 createBLEConnection 涓庡搴旇澶囧缓绔嬮摼鎺?
 				  deviceId,
-				  // 这里的 serviceId 需要在 getBLEDeviceServices 接口中获取
+				  // 杩欓噷鐨?serviceId 闇€瑕佸湪 getBLEDeviceServices 鎺ュ彛涓幏鍙?
 				  serviceId:'0000FFF0-0000-1000-8000-00805F9B34FB',
-				  // 这里的 characteristicId 需要在 getBLEDeviceCharacteristics 接口中获取
+				  // 杩欓噷鐨?characteristicId 闇€瑕佸湪 getBLEDeviceCharacteristics 鎺ュ彛涓幏鍙?
 				  characteristicId:'0000FFF1-0000-1000-8000-00805F9B34FB',
 				  success(res) {
 					console.log(res)
@@ -743,17 +856,37 @@
 					setTimeout(()=>{
 						console.log(_this.timeData);
 						getApp().writeData(_this.bleDeviceId,_this.timeData,false,'1c')
-					},1000)
+					},300)
 					setTimeout(()=>{
 						uni.hideLoading()
 						getApp().writeData(_this.bleDeviceId,'00',true)
-					},2000)
+					},700)
 				  }
 				})
 			},
-			characteristicValueChange(){//监听特征值变化
+			ensureBleListeners(){
+				if(this.listenersReady){
+					return
+				}
+				this.listenersReady = true
+				this.characteristicValueChange()
+				this.checkConnetState()
+			},
+			teardownBleListeners(){
+				this.listenersReady = false
+				if(typeof uni.offBLECharacteristicValueChange === 'function'){
+					uni.offBLECharacteristicValueChange()
+				}
+				if(typeof uni.offBLEConnectionStateChange === 'function'){
+					uni.offBLEConnectionStateChange()
+				}
+			},
+			characteristicValueChange(){//鐩戝惉鐗瑰緛鍊煎彉鍖?
 				let _this = this
 				uni.onBLECharacteristicValueChange(function (res) {
+					getApp().resolveBleWriteLoading()
+					_this.bleLinkActive = true
+					_this.$store.commit('SET_OFFLINE',false)
 					console.log(res);
 					console.log(getApp().ab2hex(res.value));
 					let hexStr = getApp().ab2hex(res.value)
@@ -765,13 +898,13 @@
 					_this.changeData(dpId,value)
 				})
 			},
-			//基础值赋值
+			//鍩虹鍊艰祴鍊?
 			changeData(dpId,value){
 				console.log('dpId...',dpId);
 				console.log('value...',value);
 				let val
 				switch (dpId){
-					case 1: //开关 BOOL
+					case 1: //寮€鍏?BOOL
 						val = parseInt(value,16)
 						if(val == 0){
 							this.switchSelected = false
@@ -779,7 +912,7 @@
 							this.switchSelected = true
 						}
 						break;
-					case 3://喷雾挡位 ENUM枚举 0 - 大容量 1 - 中容量 2 - 小容量
+					case 3://鍠烽浘鎸′綅 ENUM鏋氫妇 0 - 澶у閲?1 - 涓閲?2 - 灏忓閲?
 						// let val = parseInt(value,16)
 						// if(val == 0){
 						
@@ -789,7 +922,7 @@
 							
 						// }
 						break;
-					case 4: // 风扇开关 BOOL
+					case 4: // 椋庢墖寮€鍏?BOOL
 						val = parseInt(value,16)
 						if(val == 0){
 							this.selEntity.fanSelected = false
@@ -797,7 +930,7 @@
 							this.selEntity.fanSelected = true
 						}
 						break;
-					case 5: //童锁 BOOL
+					case 5: //绔ラ攣 BOOL
 						val = parseInt(value,16)
 						if(val == 0){
 							this.selEntity.lockSelected = false
@@ -805,7 +938,7 @@
 							this.selEntity.lockSelected = true
 						}
 						break;
-					case 9: //灯光开关 BOOL
+					case 9: //鐏厜寮€鍏?BOOL
 						val = parseInt(value,16)
 						if(val == 0){
 							this.selEntity.lampSelected = false
@@ -813,7 +946,7 @@
 							this.selEntity.lampSelected = true
 						}
 						break;
-					case 16: //故障 INT 1气泵异常，2风扇异常，电机异常
+					case 16: //鏁呴殰 INT 1姘旀车寮傚父锛?椋庢墖寮傚父锛岀數鏈哄紓甯?
 						// let val = parseInt(value,16)
 						// if(val == 1){
 							
@@ -821,7 +954,7 @@
 							
 						// }
 						break;
-					case 17: //精油报警
+					case 17: //绮炬补鎶ヨ
 						let val = parseInt(value,16)
 						if(val == 0){
 							// this.warring = true
@@ -831,51 +964,50 @@
 							// this.warring = false
 						}
 						break;
-					case 18: //工作模式 
-						/*  Pl:模式标志(分别代表五个模式:0-4)
-							P2:为该模式工作日b0~b6表示周一至周日
-							P3,P4: 起始时间、小时分钟
-							P5,P6: 结束时间、小时分钟: 
-							P7: 控制开关0关闭，1打开
-							P8，P9:工作时间，P8低八位，P9是高八位
-							P10,P11:停止时间，P10低八位，
-							P11是高八位
+					case 18: //宸ヤ綔妯″紡 
+						/*  Pl:妯″紡鏍囧織(鍒嗗埆浠ｈ〃浜斾釜妯″紡:0-4)
+							P2:涓鸿妯″紡宸ヤ綔鏃0~b6琛ㄧず鍛ㄤ竴鑷冲懆鏃?
+							P3,P4: 璧峰鏃堕棿銆佸皬鏃跺垎閽?
+							P5,P6: 缁撴潫鏃堕棿銆佸皬鏃跺垎閽? 
+							P7: 鎺у埗寮€鍏?鍏抽棴锛?鎵撳紑
+							P8锛孭9:宸ヤ綔鏃堕棿锛孭8浣庡叓浣嶏紝P9鏄珮鍏綅
+							P10,P11:鍋滄鏃堕棿锛孭10浣庡叓浣嶏紝
+							P11鏄珮鍏綅
 						*/
 					   // this.workModelHexStr = value
 					   this.filterCurModeMsg(value)
 					   this.$store.commit('SET_MOMDELSTR',value)
 						break;
-					case 20: //功能定义
-						/*  P1，P2:精油总容量: P1高八位，P2低八位
-							P3，P4:精油当前容里: P3高八位，P4低八位
-							P5: 精油消耗速度最后一位表示小数，比如:P5为50，表示5.0ML/H
-							P6，P7:精油可用天数: P6高八位，P7低八位
+					case 20: //鍔熻兘瀹氫箟
+						/*  P1锛孭2:绮炬补鎬诲閲? P1楂樺叓浣嶏紝P2浣庡叓浣?							P3锛孭4:绮炬补褰撳墠瀹归噷: P3楂樺叓浣嶏紝P4浣庡叓浣?							P5: 绮炬补娑堣€楅€熷害鏈€鍚庝竴浣嶈〃绀哄皬鏁帮紝姣斿:P5涓?0锛岃〃绀?.0ML/H
+							P6锛孭7:绮炬补鍙敤澶╂暟: P6楂樺叓浣嶏紝P7浣庡叓浣?
 						*/
 					    this.getOilStatusEntity(value)
 						break;
-					case 22: //功能定义 
-						/*  byte0-精油检测方式：0无，1-计算型，2-探测型
-							byte1-方式：0无电机，1有电机。无不显示图标
-							byte2-氛围灯：0无，1日光灯，2彩灯，3炫彩灯，无不显示图标
-							byte3-电量显示：0无，1有，无不显示图标
-							byte4-人休感应：0无，1有，无不显示图标
+					case 22: //鍔熻兘瀹氫箟 
+						/*  byte0-绮炬补妫€娴嬫柟寮忥細0鏃狅紝1-璁＄畻鍨嬶紝2-鎺㈡祴鍨?							byte1-鏂瑰紡锛?鏃犵數鏈猴紝1鏈夌數鏈恒€傛棤涓嶆樉绀哄浘鏍?							byte2-姘涘洿鐏細0鏃狅紝1鏃ュ厜鐏紝2褰╃伅锛?鐐僵鐏紝鏃犱笉鏄剧ず鍥炬爣
+							byte3-鐢甸噺鏄剧ず锛?鏃狅紝1鏈夛紝鏃犱笉鏄剧ず鍥炬爣
+							byte4-浜轰紤鎰熷簲锛?鏃狅紝1鏈夛紝鏃犱笉鏄剧ず鍥炬爣
 						*/
 					    this.getFunData(value)
 						break;
-					case 23: //工作，暂停，步进时间范围
-						/*  P1，P2:暂停时间最小值: P1高八位，P2低八位；
-							P3，P4:暂停时间最大值: P3高八位，P4低八位；
-							P5，P6:工作时间最小值: P5高八位，P6低八位；
-							P7，P8:工作时间最大值: P7高八位，P8低八位；
-							P9:步进值；
+					case 23: //宸ヤ綔锛屾殏鍋滐紝姝ヨ繘鏃堕棿鑼冨洿
+						/*  P1锛孭2:鏆傚仠鏃堕棿鏈€灏忓€? P1楂樺叓浣嶏紝P2浣庡叓浣嶏紱
+							P3锛孭4:鏆傚仠鏃堕棿鏈€澶у€? P3楂樺叓浣嶏紝P4浣庡叓浣嶏紱
+							P5锛孭6:宸ヤ綔鏃堕棿鏈€灏忓€? P5楂樺叓浣嶏紝P6浣庡叓浣嶏紱
+							P7锛孭8:宸ヤ綔鏃堕棿鏈€澶у€? P7楂樺叓浣嶏紝P8浣庡叓浣嶏紱
+							P9:姝ヨ繘鍊硷紱
 						*/
 					    this.bleHasreport = true
 					    this.getWorkData(value)
 						break;
 				}
+				this.$nextTick(()=>{
+					this.saveDetailSnapshot()
+				})
 			},
 			//===============================
-			// //二进制数组转换为16进制
+			// //浜岃繘鍒舵暟缁勮浆鎹负16杩涘埗
 			// ab2hex(buffer){
 			//   const hexArr = Array.prototype.map.call(new Uint8Array(buffer),
 			//    function(bit){
@@ -883,11 +1015,11 @@
 			//   }) 
 			//    return hexArr.join('') 
 			// },
-			// //状态数据单元
+			// //鐘舵€佹暟鎹崟鍏?
 			// dataHexStr(dpid,type,value){
-			// 	// 参数参考上面的 数据部分
+			// 	// 鍙傛暟鍙傝€冧笂闈㈢殑 鏁版嵁閮ㄥ垎
 			// 	let len = (value.length/2).toString(16)
-			// 	//补齐2byte长度
+			// 	//琛ラ綈2byte闀垮害
 			// 	len = len.length<2? '000'+len:len.length<3? '00'+len:len.length<4? '0'+len:len 
 			// 	let instruct = dpid + type + len + value
 			// 	return instruct
@@ -979,8 +1111,8 @@
 				this.checkOilTypeInput();
 			},
 			handlecapType() {
-				console.log('设置容量为=',this.capTypeValue);
-				console.log('总容量=',this.oilEntity.capacity);
+				console.log('璁剧疆瀹归噺涓?',this.capTypeValue);
+				console.log('鎬诲閲?',this.oilEntity.capacity);
 				if(Number(this.capTypeValue) > Number(this.oilEntity.capacity)){
 					this.$modal.msgError(this.$t('exceed')+this.$t('oil-capacity'))
 					return false
@@ -995,7 +1127,7 @@
 				this.oilConditionHex = start + capvalHex + end
 				// console.log(curNum);
 				console.log(this.oilConditionHex);
-				// let data = getApp().dataHexStr('14','01','0096009515018c')//重置
+				// let data = getApp().dataHexStr('14','01','0096009515018c')//閲嶇疆
 				let data = getApp().dataHexStr('14','01',this.oilConditionHex)
 				console.log(data);
 				getApp().writeData(this.bleDeviceId,data);
@@ -1007,7 +1139,7 @@
 				// let type = 'jy_type';
 				// this.sendOrder(type);
 			},
-			//保存精油类型的名称到本地
+			//淇濆瓨绮炬补绫诲瀷鐨勫悕绉板埌鏈湴
 			saveOilType(){
 				let oilObj = {
 					bleDeviceId: this.bleDeviceId,
@@ -1020,7 +1152,7 @@
 				}else{
 					let localArr = uni.getStorageSync('bleLocalOilTypeList')
 					let hasOil = localArr.findIndex(ite=>ite.bleDeviceId === oilObj.bleDeviceId)
-					if(hasOil>-1){ //判断本地数组里有无这个设备的记录，有则直接修改名称，无则push进数组
+					if(hasOil>-1){ //鍒ゆ柇鏈湴鏁扮粍閲屾湁鏃犺繖涓澶囩殑璁板綍锛屾湁鍒欑洿鎺ヤ慨鏀瑰悕绉帮紝鏃犲垯push杩涙暟缁?
 						localArr[hasOil].name = oilObj.name
 					}else{
 						localArr.push(oilObj)
@@ -1109,7 +1241,7 @@
 					})
 				}
 			},
-			// 油状态值（十六进制字符串）
+			// 娌圭姸鎬佸€硷紙鍗佸叚杩涘埗瀛楃涓诧級
 			getOilStatusValue(datalist) {
 				var hexStr = '';
 				for (let i = 0; i < datalist.length; i++) {
@@ -1140,7 +1272,7 @@
 					}
 				}
 			},
-			// 精油状态：容量、剩余容量、油耗
+			// 绮炬补鐘舵€侊細瀹归噺銆佸墿浣欏閲忋€佹补鑰?
 			getOilStatusEntity(datalist) {
 				const hexStr = datalist;
 				const byteArr = this.hexToBytes(hexStr);
@@ -1158,14 +1290,14 @@
 					capacity: this.getIntegerValue(p2, p1),
 					remain: this.getIntegerValue(p4, p3),
 					// consumption: (p5 ?? 0 / 10).toFixed(1),
-					consumption: p5? p5 : 0, //参考油耗
+					consumption: p5? p5 : 0, //鍙傝€冩补鑰?
 					useDay: this.getIntegerValue(p7, p6),
-					realityConsumption:  p8? p8 : 0, //真实油耗
+					realityConsumption:  p8? p8 : 0, //鐪熷疄娌硅€?
 				};
 
 				this.getCanUsedDays();
 			},
-			//减少精油油耗
+			//鍑忓皯绮炬补娌硅€?
 			preCons(){
 				let minConsumption = (this.oilEntity.consumption*0.7).toFixed(0)
 				// console.log(minConsumption);
@@ -1175,7 +1307,7 @@
 					this.oilEntity.realityConsumption -= 1
 				}
 			},
-			//增加精油油耗
+			//澧炲姞绮炬补娌硅€?
 			addCons(){
 				let maxConsumption = (this.oilEntity.consumption*1.3).toFixed(0)
 				// console.log(maxConsumption);
@@ -1185,16 +1317,16 @@
 					this.oilEntity.realityConsumption += 1
 				}
 			},
-			//油耗恢复默认值
+			//娌硅€楁仮澶嶉粯璁ゅ€?
 			refreshCons(){
 				this.oilEntity.realityConsumption = this.oilEntity.consumption
 			},
-			// 精油类型
+			// 绮炬补绫诲瀷
 			getOilTypeValue(datalist) {
 				if(uni.getStorageSync('bleLocalOilTypeList')){
 					let localArr = uni.getStorageSync('bleLocalOilTypeList')
 					let hasOil = localArr.findIndex(ite=>ite.bleDeviceId === this.bleDeviceId)
-					if(hasOil>-1){ //判断本地数组里有无这个设备的记录，有则直接修改名称，无则push进数组
+					if(hasOil>-1){ //鍒ゆ柇鏈湴鏁扮粍閲屾湁鏃犺繖涓澶囩殑璁板綍锛屾湁鍒欑洿鎺ヤ慨鏀瑰悕绉帮紝鏃犲垯push杩涙暟缁?
 						this.typeEntity.oilType = localArr[hasOil].name
 					}
 				}
@@ -1205,7 +1337,7 @@
 				// 	}
 				// }
 			},
-			//功能定义
+			//鍔熻兘瀹氫箟
 			getFunDataValue(datalist) {
 				var hexStr = '';
 				for (let i = 0; i < datalist.length; i++) {
@@ -1217,16 +1349,30 @@
 
 				return hexStr;
 			},
-			checkConnetState(){//监听蓝牙断开重连
+			checkConnetState(){//鐩戝惉钃濈墮鏂紑閲嶈繛
 				let _this = this
 				uni.onBLEConnectionStateChange(res=>{
-					console.log('蓝牙已断开',res)
-					if(!res.connected){//蓝牙断开重连过程
+					console.log('钃濈墮宸叉柇寮€',res)
+					if(res.deviceId && _this.bleDeviceId && res.deviceId !== _this.bleDeviceId){
+						return
+					}
+					if(res.connected){
+						_this.isConnecting = false
+						_this.clearReconnectTimer()
+						_this.isReconnecting = false
+						_this.bleLinkActive = true
+						_this.$store.commit('SET_OFFLINE',false)
+						return
+					}
+					if(!res.connected){//钃濈墮鏂紑閲嶈繛杩囩▼
+						_this.isConnecting = false
+						_this.bleLinkActive = false
 						// _this.isOffline = true;
-						console.log('设置状态为true');
+						console.log('璁剧疆鐘舵€佷负true');
 						_this.$store.commit('SET_OFFLINE',true)
 						clearInterval(_this.rssiTimer)
 						_this.rssiTimer = null
+						_this.scheduleReconnect()
 					}
 				})
 			},
@@ -1239,13 +1385,13 @@
 				// };
 				// const byteArr = this.hexToBytes(hexStr);
 				const byteArr = this.hexToBytes(datalist);
-				const p1 = byteArr[0]; // -精油检测方式：0无，1-计算型，2-探测型
-				const p2 = byteArr[1]; // -方式：0无电机，1有电机。无不显示图标
-				const p3 = byteArr[2]; // -氛围灯：0无，1日光灯，2彩灯，3炫彩灯，无不显示图标
-				const p4 = byteArr[3]; // -电量显示：0无，1有，无不显示图标
-				const p5 = byteArr[4]; // -人休感应：0无，1有，无不显示图标
-				const p6 = byteArr[5]; // -风扇：0无，1有，无不显示图标
-				const p7 = byteArr[6]; // -按键锁：0无，1有，无不显示图标
+				const p1 = byteArr[0]; // -绮炬补妫€娴嬫柟寮忥細0鏃狅紝1-璁＄畻鍨嬶紝2-鎺㈡祴鍨?
+				const p2 = byteArr[1]; // -鏂瑰紡锛?鏃犵數鏈猴紝1鏈夌數鏈恒€傛棤涓嶆樉绀哄浘鏍?
+				const p3 = byteArr[2]; // -姘涘洿鐏細0鏃狅紝1鏃ュ厜鐏紝2褰╃伅锛?鐐僵鐏紝鏃犱笉鏄剧ず鍥炬爣
+				const p4 = byteArr[3]; // -鐢甸噺鏄剧ず锛?鏃狅紝1鏈夛紝鏃犱笉鏄剧ず鍥炬爣
+				const p5 = byteArr[4]; // -浜轰紤鎰熷簲锛?鏃狅紝1鏈夛紝鏃犱笉鏄剧ず鍥炬爣
+				const p6 = byteArr[5]; // -椋庢墖锛?鏃狅紝1鏈夛紝鏃犱笉鏄剧ず鍥炬爣
+				const p7 = byteArr[6]; // -鎸夐敭閿侊細0鏃狅紝1鏈夛紝鏃犱笉鏄剧ず鍥炬爣
 
 				this.funEntity = {
 					oilState: parseInt(p1),
@@ -1260,48 +1406,48 @@
 			},
 			getWorkData(workdata){
 				console.log('getWorkData...')
-				const p1 = workdata.substr(0,4) //暂停时间最小值
-				const p2 = workdata.substr(4,4) //暂停时间最大值
-				const p3 = workdata.substr(8,4) //工作时间最小值
-				const p4 = workdata.substr(12,4) //工作时间最大值
-				const p5 = workdata.substr(16,2) //步进值
-				// console.log('暂停最小值',p1);
-				// console.log('暂停最大值',p2);
-				// console.log('工作最小值',p3);
-				// console.log('工作最大值',p4);
-				// console.log('步长',p5);
+				const p1 = workdata.substr(0,4) //鏆傚仠鏃堕棿鏈€灏忓€?
+				const p2 = workdata.substr(4,4) //鏆傚仠鏃堕棿鏈€澶у€?
+				const p3 = workdata.substr(8,4) //宸ヤ綔鏃堕棿鏈€灏忓€?
+				const p4 = workdata.substr(12,4) //宸ヤ綔鏃堕棿鏈€澶у€?
+				const p5 = workdata.substr(16,2) //姝ヨ繘鍊?
+				// console.log('鏆傚仠鏈€灏忓€?,p1);
+				// console.log('鏆傚仠鏈€澶у€?,p2);
+				// console.log('宸ヤ綔鏈€灏忓€?,p3);
+				// console.log('宸ヤ綔鏈€澶у€?,p4);
+				// console.log('姝ラ暱',p5);
 				this.$store.commit('SET_PAUSETIMEMIN',parseInt(p1,16))
 				this.$store.commit('SET_PAUSETIMEMAX',parseInt(p2,16))
 				this.$store.commit('SET_WORKTIMEMIN',parseInt(p3,16))
 				this.$store.commit('SET_WORKTIMEMAX',parseInt(p4,16))
 				this.$store.commit('SET_WORKSTEP',parseInt(p5,16))
 			},
-			//下发指令
+			//涓嬪彂鎸囦护
 			sendOrder(type) {
 				let datas = {};
 
 				switch (type) {
-					case 'fan': //风扇开关
+					case 'fan': //椋庢墖寮€鍏?
 						datas = {
 							fan_switch: this.selEntity.fanSelected
 						}
 						break;
-					case 'lamp': // 氛围灯
+					case 'lamp': // 姘涘洿鐏?
 						datas = {
 							light_switch: this.selEntity.lampSelected
 						}
 						break;
-					case 'lock': // 锁屏开关
+					case 'lock': // 閿佸睆寮€鍏?
 						datas = {
 							lock: this.selEntity.lockSelected
 						}
 						break;
-					case 'up_down': // 点击开关
+					case 'up_down': // 鐐瑰嚮寮€鍏?
 						datas = {
 							up_down: (this.selEntity.tvSelected == true ? 0 : 1)
 						}
 						break;
-					case 'switch': // 设备开关
+					case 'switch': // 璁惧寮€鍏?
 						datas = {
 							switch: this.switchSelected
 						}
@@ -1329,16 +1475,16 @@
 					isCover: 2
 				}
 				batchControlDevice(para).then(res => {
-					console.log('发送指令结果：');
+					console.log('鍙戦€佹寚浠ょ粨鏋滐細');
 					console.log(res)
 				})
 			},
-			// 获取低八位、高八位的整数值
+			// 鑾峰彇浣庡叓浣嶃€侀珮鍏綅鐨勬暣鏁板€?
 			getIntegerValue(lowByte, highByte) {
 				var integerValue = (highByte << 8) | lowByte;
 				return integerValue;
 			},
-			// 十六进制转byte数组
+			// 鍗佸叚杩涘埗杞琤yte鏁扮粍
 			hexToBytes(hex) {
 				let bytes = [];
 				for (let i = 0; i < hex.length; i += 2) {
@@ -1346,7 +1492,7 @@
 				}
 				return bytes;
 			},
-			// 可使用天数
+			// 鍙娇鐢ㄥぉ鏁?
 			getCanUsedDays() {
 				const consumption = this.oilEntity.realityConsumption;
 				const hours = this.oilEntity.realityConsumption * this.oilEntity.remain;
@@ -1433,6 +1579,12 @@
 		font-size: 16px;
 	}
 
+	.editableTxt {
+		text-decoration: underline;
+		text-decoration-color: #8f8f8f;
+		text-underline-offset: 8rpx;
+	}
+
 	.lineV {
 		position: absolute;
 		height: 50rpx;
@@ -1511,6 +1663,7 @@
 			background-color: #f5f6f7;
 			height: 90rpx;
 			border-radius: 10rpx;
+			border-bottom: 2rpx solid #d8d8d8;
 
 			.icon {
 				font-size: 38rpx;

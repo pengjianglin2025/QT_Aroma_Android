@@ -1,6 +1,6 @@
 
-var deviceModule = uni.requireNativePlugin('XM-QuectelDeviceModule')
-var configModule = uni.requireNativePlugin('XM-ConfigModule')
+var deviceModule = typeof plus !== 'undefined' ? uni.requireNativePlugin('XM-QuectelDeviceModule') : null
+var configModule = typeof plus !== 'undefined' ? uni.requireNativePlugin('XM-ConfigModule') : null
 import modal from '@/plugins/modal.js'
 
 var platform

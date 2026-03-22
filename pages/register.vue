@@ -61,6 +61,7 @@
 		queryLanguageList,
 		setCountryCode
 	} from '@/api/system/user.js'
+	import { fallbackNationalityList, normalizeNationalityList } from '@/utils/nationality.js'
 	import {
 		sendPhoneSmsCode,
 		sendEmailCode,
@@ -136,7 +137,8 @@
 				queryNationalityList().then(res => {
 					console.log('获取国家列表')
 					console.log(res);
-					that.nationalityList = res.data
+					const list = normalizeNationalityList(res)
+					that.nationalityList = list.length ? list : fallbackNationalityList
 					console.log(that.nationalityList);
 				})
 			},
