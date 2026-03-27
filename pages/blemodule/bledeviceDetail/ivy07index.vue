@@ -1,5 +1,5 @@
 <template>
-	<view>
+	<view class="device-shell">
 		<uni-nav-bar fixed="true" :border="false" status-bar left-icon="left" right-icon="gear" :title="devName" @clickLeft="back" @clickRight="navitoSet"/>
 		<view v-if="warring" class="no-oil">
 			<!-- 缂烘补 -->{{$t('com.starvation')}}
@@ -290,6 +290,19 @@
 				<view>{{$t('notconnect-tip')}}</view>
 			</view>
 		</view>
+		<!-- BLE Debug Log -->
+		<view class="ble-log-btn" @click="showBleLog=!showBleLog">LOG</view>
+		<view class="ble-log-panel" v-if="showBleLog">
+		<view class="ble-log-header">
+			<text>协议日志 ({{bleLog.length}})</text>
+			<text @click="bleLog=[]" style="color:#f66;">清空</text>
+		</view>
+			<scroll-view scroll-y class="ble-log-body" :scroll-top="bleLogScrollTop">
+				<view v-for="(item,idx) in bleLog" :key="idx" :class="'ble-log-item '+(item.dir==='RX'?'log-rx':'log-tx')">
+					<text class="log-time">{{item.time}} </text><text class="log-dir">{{item.dir}} </text><text class="log-hex">{{item.hex}}</text>
+				</view>
+			</scroll-view>
+		</view>
 	</view>
 </template>
 
@@ -357,6 +370,7 @@
 				rssiNum: null,//淇″彿鍊?
 				rssiTimer: null,
 				reconnectTimer: null,
+				notifyRetryTimer: null,
 				isLeavingPage: false,
 				isConnecting: false,
 				isReconnecting: false,
@@ -369,7 +383,14 @@
 				oilTypeReady: false,
 				errorCode:'',
 				bleHasreport: false,
+				bleLog: [],
+				showBleLog: false,
+				bleLogScrollTop: 0,
 				liveSyncTimer: null,
+				missingParamsRetryTimer: null,
+				initRecoveryTimer: null,
+				initRecoveryCount: 0,
+				lastAllParamsRequestAt: 0,
 				updateModeTimer: null, //褰撳墠妯″紡蹇冭烦鍖?
 				currentState: 0, //褰撳墠宸ヤ綔鐨勭姸鎬?0-鍋滄鐘舵€侊紝1-宸ヤ綔鐘舵€侊紝2-鏆傚仠鐘舵€?
 				countdownNum: 0, //宸ヤ綔銆佹殏鍋滃€掕鏃?
@@ -492,6 +513,9 @@
 			this.modeParamsReady = false
 			this.oilTypeReady = false
 			this.clearReconnectTimer()
+			this.clearNotifyRetryTimer()
+			this.clearMissingParamsRetryTimer()
+			this.stopInitRecovery()
 			this.stopRealtimeSync()
 			this.teardownBleListeners()
 			clearInterval(this.rssiTimer)
@@ -519,6 +543,9 @@
 				clearInterval(this.updateModeTimer)
 				this.updateModeTimer = null
 			}
+			this.clearNotifyRetryTimer()
+			this.clearMissingParamsRetryTimer()
+			this.stopInitRecovery()
 			this.stopRealtimeSync()
 		},
 		methods: {
@@ -595,6 +622,9 @@
 			},
 			requestLatestParams(){
 				if(this.isLeavingPage || !this.bleDeviceId || !this.bleLinkActive){
+					return
+				}
+				if(!this.bleHasreport){
 					return
 				}
 				getApp().writeData(this.bleDeviceId,'00',true,'',true)
@@ -913,22 +943,22 @@
 							deviceId,
 							success: res => {
 								console.log(res);
-								console.log('杩炴帴钃濈墮鎴愬姛:' + res.errMsg);
+			console.log('BLE connect success:' + res.errMsg);
 								_this.isConnecting = false
 								_this.isReconnecting = false
 								_this.bleLinkActive = true
 								_this.$store.commit('SET_OFFLINE',false)
 								_this.errorCode = ''
-								setTimeout(()=>{
+				setTimeout(()=>{
 									if(_this.platform == 'android'){ 
 										_this.setMtu(deviceId)
 									}else{
 										_this.getServices(deviceId)
 									}
-								},600)
+								},500)
 							},
 							fail: e => {
-								console.log('杩炴帴浣庡姛鑰楄摑鐗欏け璐ワ紝閿欒鐮侊細' + e.errCode); 
+			console.log('BLE connect fail:' + e.errCode);
 								_this.isConnecting = false
 								if (e.errCode !== 0) {
 									uni.hideLoading()
@@ -956,6 +986,81 @@
 					this.reconnectTimer = null
 				}
 			},
+			clearNotifyRetryTimer(){
+				if(this.notifyRetryTimer){
+					clearTimeout(this.notifyRetryTimer)
+					this.notifyRetryTimer = null
+				}
+			},
+			clearMissingParamsRetryTimer(){
+				if(this.missingParamsRetryTimer){
+					clearTimeout(this.missingParamsRetryTimer)
+					this.missingParamsRetryTimer = null
+				}
+			},
+			stopInitRecovery(){
+				if(this.initRecoveryTimer){
+					clearTimeout(this.initRecoveryTimer)
+					this.initRecoveryTimer = null
+				}
+				this.initRecoveryCount = 0
+			},
+			startInitRecovery(){
+				this.stopInitRecovery()
+				this.initRecoveryTimer = setTimeout(()=>{
+					this.initRecoveryTimer = null
+					if(this.isLeavingPage || this.pageParamsReady){
+						return
+					}
+					this.initRecoveryCount = 1
+					const missing = []
+					if(!this.oilParamsReady) missing.push('dp20')
+					if(!this.modeParamsReady) missing.push('dp18/25')
+					if(!this.runtimeParamsReady) missing.push('dp23/24/27')
+					this.addBleLog('DBG', 'init-recover-1')
+					if(missing.length){
+						this.addBleLog('DBG', 'missing:'+missing.join(','))
+						this.requestAllParams('recover1')
+					}
+				},2600)
+			},
+			requestAllParams(reason){
+				const now = Date.now()
+				if(this.lastAllParamsRequestAt && (now - this.lastAllParamsRequestAt) < 1800){
+					this.addBleLog('DBG', 'skip-08 too-fast'+(reason ? ' '+reason : ''))
+					return
+				}
+				this.lastAllParamsRequestAt = now
+				this.addBleLog('TX', '08:00'+(reason ? ' '+reason : ''))
+				getApp().writeData(this.bleDeviceId,'00',true,'',true)
+			},
+			scheduleMissingParamsRetry(){
+				this.clearMissingParamsRetryTimer()
+				this.missingParamsRetryTimer = setTimeout(()=>{
+					this.missingParamsRetryTimer = null
+					if(this.isLeavingPage || this.pageParamsReady){
+						return
+					}
+					const missing = []
+					if(!this.oilParamsReady) missing.push('dp20')
+					if(!this.modeParamsReady) missing.push('dp18/25')
+					if(!this.runtimeParamsReady) missing.push('dp23/24/27')
+					if(missing.length && this.initRecoveryCount < 2){
+						this.initRecoveryCount = 2
+						this.addBleLog('DBG', 'missing:'+missing.join(','))
+						this.requestAllParams('retry')
+					}
+				},5200)
+			},
+			addBleLog(dir, hex) {
+				const now = new Date()
+				const pad2 = n => n.toString().padStart(2,'0')
+				const pad3 = n => n.toString().padStart(3,'0')
+				const time = pad2(now.getHours())+':'+pad2(now.getMinutes())+':'+pad2(now.getSeconds())+'.'+pad3(now.getMilliseconds())
+				this.bleLog.push({ dir, hex: hex.toUpperCase(), time })
+				if (this.bleLog.length > 200) this.bleLog.splice(0, 1)
+				this.$nextTick(() => { this.bleLogScrollTop = 99999 })
+			},
 			scheduleReconnect(){
 				if(this.isLeavingPage || !this.bleDeviceId || this.reconnectTimer || this.isConnecting){
 					return
@@ -967,15 +1072,17 @@
 						return
 					}
 					this.connetDevice(this.bleDeviceId)
-				}, 800)
+				}, 350)
 			},
 			setMtu(deviceId){
 				let _this = this
+				this.addBleLog('DBG', 'setMtu called')
 				uni.setBLEMTU({deviceId,mtu:256,success:sue=>{
 					console.log('succ====>',sue);
+					_this.addBleLog('DBG', 'MTU:'+(sue.mtu||JSON.stringify(sue)))
 					setTimeout(()=>{
 						_this.getServices(deviceId)
-					},400)
+					},500)
 				}})
 			},
 			getServices(deviceId){//鑾峰彇钃濈墮璁惧鎵€鏈夋湇鍔?
@@ -984,33 +1091,83 @@
 				  deviceId,
 				  success(res) {
 				    console.log('device services:', res.services)
-					_this.getValueChange(deviceId)
+					const targetService = (res.services || []).find(item => (item.uuid || '').toUpperCase() === '0000FFF0-0000-1000-8000-00805F9B34FB')
+					if(!targetService){
+						_this.addBleLog('ERR', 'service-FFF0-missing')
+						_this.scheduleNotifyRetry(deviceId)
+						return
+					}
+					_this.getCharacteristics(deviceId, targetService.uuid)
 					
 				  }
 				})
 			},
-			getValueChange(deviceId){
+			getCharacteristics(deviceId, serviceId){
+				let _this = this
+				uni.getBLEDeviceCharacteristics({
+					deviceId,
+					serviceId,
+					success(res) {
+						const chars = res.characteristics || []
+						const notifyChar = chars.find(item => (item.uuid || '').toUpperCase() === '0000FFF1-0000-1000-8000-00805F9B34FB')
+						const writeChar = chars.find(item => (item.uuid || '').toUpperCase() === '0000FFF2-0000-1000-8000-00805F9B34FB')
+						if(!notifyChar || !writeChar){
+							_this.addBleLog('ERR', 'char-missing FFF1/FFF2')
+							_this.scheduleNotifyRetry(deviceId)
+							return
+						}
+						_this.getValueChange(deviceId, serviceId, notifyChar.uuid)
+					},
+					fail(err){
+						_this.addBleLog('ERR', 'char-fail:'+(err.errCode || '')+' '+(err.errMsg || ''))
+						_this.scheduleNotifyRetry(deviceId)
+					}
+				})
+			},
+			scheduleNotifyRetry(deviceId){
+				this.clearNotifyRetryTimer()
+				this.notifyRetryTimer = setTimeout(()=>{
+					this.notifyRetryTimer = null
+					if(this.isLeavingPage || !deviceId){
+						return
+					}
+					this.addBleLog('DBG', 'notify-retry')
+					this.getServices(deviceId)
+				},300)
+			},
+			getValueChange(deviceId, serviceId = '0000FFF0-0000-1000-8000-00805F9B34FB', characteristicId = '0000FFF1-0000-1000-8000-00805F9B34FB'){
 				let _this = this
 				//鎵惧埌鍨嬪彿涓篕5-BTS鐨勮澶?
+				this.addBleLog('DBG', 'gVC-called')
 				uni.notifyBLECharacteristicValueChange({
 				  state: true, // 鍚敤 notify 鍔熻兘
 				  // 杩欓噷鐨?deviceId 闇€瑕佸凡缁忛€氳繃 createBLEConnection 涓庡搴旇澶囧缓绔嬮摼鎺?
 				  deviceId,
 				  // 杩欓噷鐨?serviceId 闇€瑕佸湪 getBLEDeviceServices 鎺ュ彛涓幏鍙?
-				  serviceId:'0000FFF0-0000-1000-8000-00805F9B34FB',
+				  serviceId,
 				  // 杩欓噷鐨?characteristicId 闇€瑕佸湪 getBLEDeviceCharacteristics 鎺ュ彛涓幏鍙?
-				  characteristicId:'0000FFF1-0000-1000-8000-00805F9B34FB',
+				  characteristicId,
 				  success(res) {
 					console.log(res)
 					console.log('notifyBLECharacteristicValueChange success', res.errMsg)
+					_this.clearNotifyRetryTimer()
+					_this.addBleLog('DBG', 'notify-OK')
+					_this.startInitRecovery()
 					setTimeout(()=>{
 						console.log(_this.timeData);
+						_this.addBleLog('TX', '1c:'+_this.timeData)
 						getApp().writeData(_this.bleDeviceId,_this.timeData,false,'1c',true)
 					},300)
 					setTimeout(()=>{
 						uni.hideLoading()
-						getApp().writeData(_this.bleDeviceId,'00',true,'',true)
-					},700)
+						_this.requestAllParams()
+						_this.scheduleMissingParamsRetry()
+					},500)
+				  },
+				  fail(e){
+					_this.addBleLog('ERR', 'notify-FAIL:'+e.errCode+' '+e.errMsg)
+					console.log('notifyBLE fail', e)
+					_this.scheduleNotifyRetry(deviceId)
 				  }
 				})
 			},
@@ -1040,10 +1197,14 @@
 					console.log(res);
 					console.log(getApp().ab2hex(res.value));
 					let hexStr = getApp().ab2hex(res.value)
+					_this.addBleLog('RX', hexStr)
 					let dpId = parseInt(hexStr.substring(12,14),16) 
 					let value = hexStr.substring(20,hexStr.length-2)
 					if(dpId == 20){
 						_this.oilConditionHex = value
+					}
+					if([20,22,23,24,25,26,27].includes(dpId)){
+						_this.addBleLog('DBG', 'dp'+dpId+':'+value)
 					}
 					_this.changeData(dpId,value)
 				})
@@ -1128,6 +1289,7 @@
 					   this.filterCurModeMsg(value)
 					   this.$store.commit('SET_MOMDELSTR',value)
 					   this.modeParamsReady = true
+					   this.addBleLog('DBG', 'mode18-ready')
 					   uni.$emit('bleWorkModelUpdated', { hex: value })
 						break;
 					case 20: //鍔熻兘瀹氫箟
@@ -1138,6 +1300,7 @@
 						*/
 					    this.getOilStatusEntity(value)
 					    this.oilParamsReady = true
+						this.addBleLog('DBG', 'oil-ready')
 						break;
 					case 22: //鍔熻兘瀹氫箟 
 						/*  byte0-绮炬补妫€娴嬫柟寮忥細0鏃狅紝1-璁＄畻鍨嬶紝2-鎺㈡祴鍨?
@@ -1158,6 +1321,7 @@
 					    this.bleHasreport = true
 					    this.getWorkData(value)
 					    this.runtimeParamsReady = true
+						this.addBleLog('DBG', 'runtime23-ready')
 						break;
 					case 24: //宸ヤ綔/鏆傚仠鏃堕棿
 						/*  P1:鐘舵€侊紙0涓哄仠姝㈢姸鎬侊紝1涓哄伐浣滅姸鎬侊紝2涓烘殏鍋滅姸鎬侊級
@@ -1173,10 +1337,11 @@
 					    this.countdownNum = parseInt(time,16)
 					    this.maxWorktime = parseInt(maxWorktime,16)
 					    this.maxPausetime = parseInt(maxPausetime,16)
-						console.log('褰撳墠鐨勭姸鎬佹槸===========>',state);
-						console.log('褰撳墠鐨勬椂闂存槸===========>',time);
+			console.log('current state =>', state);
+			console.log('current time =>', time);
 						this.setCountDownTimer(this.currentState)
 						this.runtimeParamsReady = true
+						this.addBleLog('DBG', 'runtime24-ready')
 						break;
 					case 25://鍙傛暟杩愯妯″紡
 						/* 0锛氱畝鍗曟ā寮忥紱1锛氫笓涓氭ā寮?*/
@@ -1188,6 +1353,7 @@
 							this.filterCurModeMsg(this.workModelHexStr)
 						}
 						this.modeParamsReady = true
+						this.addBleLog('DBG', 'mode25-ready')
 						uni.$emit('bleParameterModeUpdated', { value: valInt })
 						break;
 					case 26://绠€鍗曟ā寮忎笅棣欐皼娴撳害妯″紡涓暟
@@ -1202,11 +1368,13 @@
 						this.$store.commit('SET_SIMPLEMODE',simpleTime)
 						this.$store.commit('SET_CURGEAR',currentmode)
 						this.runtimeParamsReady = true
+						this.addBleLog('DBG', 'runtime27-ready')
 						uni.$emit('bleSimpleModeUpdated', { simpleTime, currentmode })
 						break;
 				}
 				this.pageParamsReady = this.oilParamsReady && this.runtimeParamsReady && this.modeParamsReady
 				if(this.pageParamsReady){
+					this.stopInitRecovery()
 					uni.hideLoading()
 				}
 				this.$nextTick(()=>{
@@ -1318,8 +1486,8 @@
 				this.checkOilTypeInput();
 			},
 			handlecapType() {
-				console.log('璁剧疆瀹归噺涓?',this.capTypeValue);
-				console.log('鎬诲閲?',this.oilEntity.capacity);
+			console.log('set capacity =>', this.capTypeValue);
+			console.log('total capacity =>', this.oilEntity.capacity);
 				if(Number(this.capTypeValue) > Number(this.oilEntity.capacity)){
 					this.$modal.msgError(this.$t('exceed')+this.$t('oil-capacity'))
 					return false
@@ -1559,23 +1727,28 @@
 			checkConnetState(){//鐩戝惉钃濈墮鏂紑閲嶈繛
 				let _this = this
 				uni.onBLEConnectionStateChange(res=>{
-					console.log('钃濈墮宸叉柇寮€',res)
+			console.log('BLE disconnected', res)
 					if(res.deviceId && _this.bleDeviceId && res.deviceId !== _this.bleDeviceId){
 						return
 					}
 					if(res.connected){
 						_this.isConnecting = false
+						const wasReconnecting = _this.isReconnecting
 						_this.clearReconnectTimer()
 						_this.isReconnecting = false
 						_this.bleLinkActive = true
 						_this.$store.commit('SET_OFFLINE',false)
+						if(wasReconnecting && !_this.bleHasreport && _this.bleDeviceId){
+							_this.getValueChange(_this.bleDeviceId)
+						}
 						return
 					}
 					if(!res.connected){//钃濈墮鏂紑閲嶈繛杩囩▼
 						_this.isConnecting = false
 						_this.bleLinkActive = false
+						_this.bleHasreport = false
 						// _this.isOffline = true;
-						console.log('璁剧疆鐘舵€佷负true');
+			console.log('set offline true');
 						_this.$store.commit('SET_OFFLINE',true)
 						clearInterval(_this.rssiTimer)
 						_this.rssiTimer = null
@@ -1682,7 +1855,7 @@
 					isCover: 2
 				}
 				batchControlDevice(para).then(res => {
-					console.log('鍙戦€佹寚浠ょ粨鏋滐細');
+			console.log('send command result:');
 					console.log(res)
 				})
 			},
@@ -1716,15 +1889,26 @@
 </script>
 
 <style lang="scss">
+	.device-shell{
+		min-height: 100vh;
+		background:
+			radial-gradient(circle at 18% 10%, rgba(73, 239, 220, 0.14), transparent 24%),
+			radial-gradient(circle at 86% 12%, rgba(86, 132, 255, 0.16), transparent 22%),
+			linear-gradient(180deg, #07111f 0%, #0a1730 48%, #08111f 100%);
+	}
 	.ttip {
-		color: #000000;
-		height: 40px;
-		font-size: 14px;
+		color: #b8f4ff;
+		height: 82rpx;
+		font-size: 26rpx;
 		display: flex;
 		flex-direction: row;
 		justify-content: center;
 		align-items: center;
-
+		margin: 0 20rpx;
+		border-radius: 18rpx;
+		background: linear-gradient(180deg, rgba(13, 28, 50, 0.9) 0%, rgba(9, 20, 38, 0.82) 100%);
+		border: 1px solid rgba(124, 218, 255, 0.14);
+		box-shadow: 0 14rpx 32rpx rgba(0, 0, 0, 0.2);
 	}
 
 	.ttip2 {
@@ -1739,10 +1923,14 @@
 		text-align: center;
 		// display: flex;
 		// justify-content: center;
-		padding-top: 44rpx;
-		padding-bottom: 52rpx;
+		padding-top: 52rpx;
+		padding-bottom: 62rpx;
 		position: relative;
-		background: linear-gradient(#87dfca,#def4de);
+		background:
+			radial-gradient(circle at 50% 20%, rgba(77, 245, 224, 0.32), transparent 20%),
+			linear-gradient(180deg, #0f2442 0%, #132f55 38%, #10233f 100%);
+		border-radius: 0 0 38rpx 38rpx;
+		box-shadow: inset 0 -20rpx 30rpx rgba(255,255,255,0.05), 0 22rpx 46rpx rgba(0,0,0,0.22);
 	}
 
 	.tcon {
@@ -1760,15 +1948,19 @@
 	.oilV {
 		padding: 0 20rpx;
 		font-size: 14px;
+		margin-top: 22rpx;
 	}
 
 	.oilV>view {
-		background-color: #ffffff;
-		border-radius: 10rpx;
+		background: linear-gradient(180deg, rgba(14, 30, 53, 0.96) 0%, rgba(9, 19, 36, 0.92) 100%);
+		border-radius: 24rpx;
+		border: 1px solid rgba(124, 218, 255, 0.12);
+		box-shadow: 0 20rpx 42rpx rgba(0, 0, 0, 0.22);
+		overflow: hidden;
 	}
 
 	.oilItem {
-		padding: 20rpx 0;
+		padding: 28rpx 0;
 		text-align: center;
 		position: relative;
 	}
@@ -1778,56 +1970,61 @@
 	}
 
 	.oilItem .o2 {
-		font-size: 9px;
+		font-size: 20rpx;
+		color: #8ea7c5;
 	}
 
 	.oilItem .oilTxt {
-		font-weight: bold;
-		font-size: 16px;
+		font-weight: 700;
+		font-size: 36rpx;
+		color: #f4fbff;
 	}
 
 	.editableTxt {
 		text-decoration: underline;
-		text-decoration-color: #8f8f8f;
+		text-decoration-color: #77dfff;
 		text-underline-offset: 8rpx;
 	}
 
 	.lineV {
 		position: absolute;
-		height: 50rpx;
-		border: 1rpx solid #EFEFEF;
-		top: 45rpx;
+		height: 72rpx;
+		border: 1rpx solid rgba(124, 218, 255, 0.16);
+		top: 36rpx;
 	}
 
 	.tmV {
 		padding: 0 20rpx;
-		margin-top: 20rpx;
+		margin-top: 22rpx;
 	}
 
 	.tmV>view>view {
-		background-color: #ffffff;
-		border-radius: 10rpx;
+		background: linear-gradient(180deg, rgba(14, 30, 53, 0.96) 0%, rgba(9, 19, 36, 0.92) 100%);
+		border-radius: 24rpx;
 		display: flex;
 		justify-content: space-between;
-		padding: 30rpx;
+		padding: 34rpx 30rpx;
+		border: 1px solid rgba(124, 218, 255, 0.12);
+		box-shadow: 0 20rpx 42rpx rgba(0, 0, 0, 0.22);
 	}
 
 	.tmV>view>view>view>view:first-child {
-		font-size: 16px;
-		font-weight: bold;
+		font-size: 32rpx;
+		font-weight: 700;
+		color: #f4fbff;
 	}
 
 	.tmV>view>view>view>view:last-child {
-		color: #B5B5B5;
-		font-size: 12px;
-		margin-top: 20rpx;
+		color: #8ea7c5;
+		font-size: 24rpx;
+		margin-top: 14rpx;
+		line-height: 1.35;
 	}
 
 	.conV {
-
 		padding-left: 10rpx;
 		padding-right: 10rpx;
-		margin-top: 10rpx;
+		margin-top: 16rpx;
 		font-size: 14px;
 	}
 
@@ -1842,10 +2039,12 @@
 	}
 
 	.funList>view {
-		background-color: #ffffff;
-		border-radius: 10rpx;
+		background: linear-gradient(180deg, rgba(14, 30, 53, 0.96) 0%, rgba(9, 19, 36, 0.92) 100%);
+		border-radius: 22rpx;
 		text-align: center;
-		padding: 20rpx 0;
+		padding: 24rpx 0;
+		border: 1px solid rgba(124, 218, 255, 0.12);
+		box-shadow: 0 18rpx 34rpx rgba(0, 0, 0, 0.18);
 	}
 
 	.login-form-content {
@@ -1867,15 +2066,15 @@
 		.input-item {
 			margin: 40rpx auto;
 			margin-top: 20rpx;
-			background-color: #f5f6f7;
+				background: linear-gradient(180deg, rgba(13, 28, 50, 0.9) 0%, rgba(9, 20, 38, 0.82) 100%);
 			height: 90rpx;
-			border-radius: 10rpx;
-			border-bottom: 2rpx solid #d8d8d8;
+				border-radius: 18rpx;
+				border: 1px solid rgba(124, 218, 255, 0.14);
 
 			.icon {
 				font-size: 38rpx;
 				margin-left: 10px;
-				color: #999;
+				color: #8ea7c5;
 			}
 
 			.input {
@@ -1888,27 +2087,28 @@
 
 		}
 		.cons-value{
-			background-color: #f5f6f7;
+			background: linear-gradient(180deg, rgba(13, 28, 50, 0.9) 0%, rgba(9, 20, 38, 0.82) 100%);
 			padding: 30rpx 40rpx;
-			border-radius: 10rpx;
+			border-radius: 18rpx;
 			font-size: 34rpx;
 			font-weight: bold;
+			color: #f4fbff;
 		}
 		
 		.login-btn {
 			margin-top: 40px;
 			height: 45px;
-			background-color: #01CBA5;
+			background: linear-gradient(135deg, #3df0d7 0%, #2f86ff 100%);
 			color: #ffffff;
-			border-radius: 10px;
+			border-radius: 18px;
 		}
 
 		.login-btn2 {
 			margin-top: 40px;
 			height: 45px;
-			background-color: #AAAAAA;
-			color: #ffffff;
-			border-radius: 10px;
+			background: rgba(105, 121, 142, 0.4);
+			color: rgba(255,255,255,0.65);
+			border-radius: 18px;
 		}
 
 		.reg {
@@ -1925,9 +2125,10 @@
 	}
 
 	.pv {
-		background-color: #ffffff;
-		border-radius: 10rpx;
+		background: linear-gradient(180deg, rgba(14, 30, 53, 0.98) 0%, rgba(9, 19, 36, 0.95) 100%);
+		border-radius: 24rpx;
 		padding: 40rpx;
+		border: 1px solid rgba(124, 218, 255, 0.14);
 
 	}
 
@@ -1935,6 +2136,7 @@
 		font-size: 16px;
 		padding-bottom: 20rpx;
 		font-weight: bold;
+		color: #f4fbff;
 	}
 
 	.wmlists {
@@ -1946,21 +2148,21 @@
 	}
 
 	.wmlist {
-		background-color: #f5f6f7;
+		background: rgba(20, 41, 70, 0.92);
 		padding: 40rpx;
 		margin: 10rpx;
 		border-radius: 26rpx;
-		border: 1px solid #ffffff;
+		border: 1px solid rgba(124, 218, 255, 0.12);
 	}
 
 	.selwmList {
 		background-image: url('../../../static/check.png');
 		background-position: right bottom;
 		background-repeat: no-repeat;
-		border: 1px solid #00AD8D;
+		border: 1px solid #4eece0;
 	}
 	.no-oil{
-		background-color: #ff0000;
+		background-color: #ff4d5f;
 		color: #fff;
 		padding: 10rpx 0;
 		padding-left: 60rpx;
@@ -1969,11 +2171,60 @@
 		width: 58rpx;
 	}
 	.modetimes{
-		padding: 18rpx 40rpx;
+		padding: 20rpx 42rpx;
+		min-width: 224rpx;
+		box-shadow: 0 10rpx 20rpx rgba(68, 53, 31, 0.08);
 		// background-color: #00BD54;
 	}
 	.ml-10{
 		margin-left: 10rpx;
 	}
+	.ble-log-btn {
+		position: fixed;
+		bottom: 160rpx;
+		right: 20rpx;
+		z-index: 9999;
+		background: rgba(0,0,0,0.65);
+		color: #00ff88;
+		font-size: 22rpx;
+		padding: 10rpx 18rpx;
+		border-radius: 30rpx;
+	}
+	.ble-log-panel {
+		position: fixed;
+		bottom: 0;
+		left: 0;
+		right: 0;
+		z-index: 9998;
+		height: 520rpx;
+		background: rgba(10,10,10,0.92);
+		display: flex;
+		flex-direction: column;
+	}
+	.ble-log-header {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		padding: 12rpx 20rpx;
+		color: #fff;
+		font-size: 26rpx;
+		border-bottom: 2rpx solid #333;
+		flex-shrink: 0;
+	}
+	.ble-log-body {
+		flex: 1;
+		height: 460rpx;
+	}
+	.ble-log-item {
+		padding: 4rpx 12rpx;
+		font-size: 20rpx;
+		border-bottom: 1rpx solid #1a1a1a;
+	}
+	.log-rx { color: #00ff88; }
+	.log-tx { color: #ffcc00; }
+	.log-time { color: #666; font-size: 18rpx; }
+	.log-dir { font-weight: bold; margin: 0 6rpx; }
+	.log-hex { word-break: break-all; }
 </style>
 
+$2

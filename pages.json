@@ -212,6 +212,11 @@
 				"navigationStyle": "custom"
 			}
 		},{
+			"path": "pages/blemodule/ota/index",
+			"style": {
+				"navigationStyle": "custom"
+			}
+		},{
 			"path": "pages/blemodule/bledeviceDetail/index",
 			"style": {
 				"navigationStyle": "custom"

@@ -1,4 +1,4 @@
-<template>
+﻿<template>
 	<view>
 		<!-- <uni-nav-bar fixed="true" :border="false" status-bar left-icon="left" :title="title" @clickLeft="back"> -->
 		<uni-nav-bar fixed="true" :border="false" status-bar :title="title">
@@ -157,13 +157,14 @@
 				currTimes: 0,
 				totalWeeks: [this.$t('com.mon'),this.$t('com.tue'),this.$t('com.wed'),this.$t('com.thur'),this.$t('com.fri'),this.$t('com.sat'),this.$t('com.sun')],
 				selIndex: 0,
-				devicemsg: {}, //设备信息：pk，dk,
+				devicemsg: {}, //璁惧淇℃伅锛歱k锛宒k,
 				isChanged:false,
-				showp: false, //控制组件延时显示
-				secondList:[], //香薰工作时间
-				pauseList:[], //香薰暂停时间
+				showp: false, //鎺у埗缁勪欢寤舵椂鏄剧ず
+				secondList:[], //棣欒柊宸ヤ綔鏃堕棿
+				pauseList:[], //棣欒柊鏆傚仠鏃堕棿
 				selValue:0,
 				selValue1:0,
+				refreshQueryTimer: null,
 			}
 		},
 		computed: {
@@ -180,15 +181,16 @@
 		},
 		onLoad(e) {
 			this.$store.commit('SET_OFFLINE',false)
+			this.$store.commit('SET_OFFLINE',false)
 			// this.devicemsg = e;
 			this.item = JSON.parse(e.itemStr);
 			this.title = '';
 			this.selIndex = e.index;
-			console.log('暂停最小值',this.pauseTimeMin);
-			console.log('暂停最大值',this.pauseTimeMax);
-			console.log('工作最小值',this.workTimeMin);
-			console.log('工作最大值',this.workTimeMax);
-			console.log('步长',this.workStep);
+			console.log('鏆傚仠鏈€灏忓€?,this.pauseTimeMin);
+			console.log('鏆傚仠鏈€澶у€?,this.pauseTimeMax);
+			console.log('宸ヤ綔鏈€灏忓€?,this.workTimeMin);
+			console.log('宸ヤ綔鏈€澶у€?,this.workTimeMax);
+			console.log('姝ラ暱',this.workStep);
 			let pauseCount = ((this.pauseTimeMax - this.pauseTimeMin)/this.workStep).toFixed(0)
 			let workCount = ((this.workTimeMax - this.workTimeMin)/this.workStep).toFixed(0)
 			for(let i=0;i<=pauseCount;i++){
@@ -215,6 +217,7 @@
 				this.selValue = this.getArrayIndex(this.item.wtimes);
 				this.selValue1 = this.getArrayIndex2(this.item.ptimes);
 			},300)
+			this.refreshFromDevice()
 			
 			// for (let i = this.pauseTimeMin; i <= this.pauseTimeMax; i++) {
 			// 	if(i%this.workStep == 0){
@@ -227,7 +230,7 @@
 			// 	}
 			// }
 			
-			// 香薰工作/暂停时间为5-900秒，步长为5
+			// 棣欒柊宸ヤ綔/鏆傚仠鏃堕棿涓?-900绉掞紝姝ラ暱涓?
 			// for (let i = 5; i <= 500; i++) {
 			// 	if(i%5 == 0){
 			// 		this.secondList.push({id:this.secondList.length + 1,val:i.toString()});
@@ -239,6 +242,7 @@
 		},
 		onShow() {
 			this.$store.commit('SET_OFFLINE',false)
+			this.$store.commit('SET_OFFLINE',false)
 			console.log(this.is24hour);
 		},
 		onBackPress(options) { 
@@ -247,12 +251,26 @@
 			// }
 		},
 		methods: {
+			refreshFromDevice(){
+				if(this.refreshQueryTimer){
+					clearTimeout(this.refreshQueryTimer)
+				}
+				if(!this.deviceId || this.isOffline){
+					return
+				}
+				this.refreshQueryTimer = setTimeout(() => {
+					if(!this.deviceId || this.isOffline){
+						return
+					}
+					const queryData = getApp().dataHexStr('00','', '')
+					getApp().writeData(this.deviceId, queryData, true, '', true)
+				}, 350)
+			},
 			change12H(time){
 				const Hours = time.split(':')[0]
 				let newHour = Hours<=12? Hours: (Number(Hours)-12).toString().padStart(2,'0')
 				if(newHour == 0){
-					newHour = '12' //凌晨12点
-				}
+					newHour = '12' //鍑屾櫒12鐐?				}
 				return newHour+':'+time.split(':')[1]
 			},
 			showPicker(type) {
@@ -446,8 +464,7 @@
 				this.isChanged = true;
 				this.handleData();
 			},
-			//校验开始结束时间
-			timeCheck(){
+			//鏍￠獙寮€濮嬬粨鏉熸椂闂?			timeCheck(){
 				let flag = false
 				console.log(this.item.btime);
 				console.log(this.item.etime);
@@ -459,10 +476,10 @@
 				console.log(parseInt(eM));
 				if(parseInt(eH)>parseInt(bH)){
 					flag = true
-					// console.log('满足条件1');
+					// console.log('婊¤冻鏉′欢1');
 				}else if(parseInt(eH)==parseInt(bH)){
 					if(parseInt(eM)>=parseInt(bM)){
-						// console.log('满足条件2');
+						// console.log('婊¤冻鏉′欢2');
 						flag = true
 					}
 				}
@@ -474,27 +491,25 @@
 				for (let i = 0; i < itemList.length; i++) {
 					const item = itemList[i];
 
-					// Pl:模式标志(分别代表五个模式:0-4)
+					// Pl:妯″紡鏍囧織(鍒嗗埆浠ｈ〃浜斾釜妯″紡:0-4)
 					const p1 = i;
-					// P2:为该模式工作日b0~b6表示周一至周日
-					const p2 = this.weekToByte(item.weeks);
-					//P3,P4: 起始时间、小时分钟
-					const p3 = parseInt(item.btime.split(':')[0]);
+					// P2:涓鸿妯″紡宸ヤ綔鏃0~b6琛ㄧず鍛ㄤ竴鑷冲懆鏃?					const p2 = this.weekToByte(item.weeks);
+					//P3,P4: 璧峰鏃堕棿銆佸皬鏃跺垎閽?					const p3 = parseInt(item.btime.split(':')[0]);
 					const p4 = parseInt(item.btime.split(':')[1]);
-					//P5,P6: 结束时间、小时分钟:
+					//P5,P6: 缁撴潫鏃堕棿銆佸皬鏃跺垎閽?
 					const p5 = parseInt(item.etime.split(':')[0]);
 					const p6 = parseInt(item.etime.split(':')[1]);
 					console.log(p3+':'+p4+':'+p5+':'+p6);
 				
 					
-					//P7: 控制开关0关闭，1打开
+					//P7: 鎺у埗寮€鍏?鍏抽棴锛?鎵撳紑
 					const p7 = (item.selected == true ? 1 : 0);
 		
-					//P8，P9:工作时间，P8低八位，P9是高八位
+					//P8锛孭9:宸ヤ綔鏃堕棿锛孭8浣庡叓浣嶏紝P9鏄珮鍏綅
 					const bytes = this.getLowHighBytes(parseInt(item.wtimes));
 					const p8 = bytes[1];
 					const p9 = bytes[0];
-					//P10,P11:停止时间，P10低八位，P11是高八位
+					//P10,P11:鍋滄鏃堕棿锛孭10浣庡叓浣嶏紝P11鏄珮鍏綅
 					const bytes2 = this.getLowHighBytes(parseInt(item.ptimes));
 					const p10 = bytes2[1];
 					const p11 = bytes2[0];
@@ -519,14 +534,13 @@
 				getApp().writeData(this.deviceId,data);
 				this.$store.commit('SET_MOMDELSTR',hexStr)
 				uni.$emit('updateWM', {
-					// msg: '更新工作模式...'
+					// msg: '鏇存柊宸ヤ綔妯″紡...'
 					msg: hexStr
 				})
 				uni.navigateBack()
 				// this.sendOrder(hexStr);
 			},
-			// 星期转八位
-			weekToByte(weeks) {
+			// 鏄熸湡杞叓浣?			weekToByte(weeks) {
 				const mon = this.$t('com.mon');
 				const tue = this.$t('com.tue');
 				const wed = this.$t('com.wed');
@@ -567,7 +581,7 @@
 
 				return parseInt(bitstr, 2);
 			},
-			// 获取数值的底高八位
+			// 鑾峰彇鏁板€肩殑搴曢珮鍏綅
 			getLowHighBytes(integerValue) {
 				var lowByte = integerValue & 0xFF;
 				var highByte = (integerValue >> 8) & 0xFF;
@@ -579,7 +593,7 @@
 					return null;
 				}
 			},
-			//下发指令
+			//涓嬪彂鎸囦护
 			sendOrder(hexStr) {
 				let datas = {
 					work_list: hexStr
@@ -601,10 +615,10 @@
 				}
 
 				batchControlDevice(para).then(res => {
-					// console.log('maintain发送指令结果：');
+					// console.log('maintain鍙戦€佹寚浠ょ粨鏋滐細');
 					// console.log(res)
 					// uni.$emit('updateWM', {
-					// 	msg: '更新工作模式...'
+					// 	msg: '鏇存柊宸ヤ綔妯″紡...'
 					// })
 				})
 			},
@@ -715,3 +729,8 @@
 		padding: 16rpx 0;
 	}
 </style>
+
+
+
+
+

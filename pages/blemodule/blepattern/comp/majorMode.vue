@@ -1,4 +1,4 @@
-<template>
+﻿<template>
 <view>
 	<view class="modeLists">
 		<template v-for="(item,index) in modeList">
@@ -65,11 +65,14 @@ import { mapGetters } from 'vuex'
 export default{
 	name:'majorMode',
 	props:{
-		
+		maintainPage: {
+			type: String,
+			default: 'maintain'
+		}
 	},
 	data(){
 		return{
-			devicemsg: {}, //设备信息：pk，dk
+			devicemsg: {}, //璁惧淇℃伅锛歱k锛宒k
 			modeList: [],
 		}
 	},
@@ -94,11 +97,11 @@ export default{
 	},
 	created() {
 		this.$store.commit('SET_OFFLINE',false)
-		console.log('模式参数=====',this.workModelHexStr);
-		this.getWorkModelList(this.workModelHexStr) //记得放开注释！！
+		console.log('妯″紡鍙傛暟=====',this.workModelHexStr);
+		this.getWorkModelList(this.workModelHexStr) //璁板緱鏀惧紑娉ㄩ噴锛侊紒
 		const that = this;
 		uni.$on('updateWM', function(data) {
-			console.log('监听到事件来自 updateWM ，携带参数 msg 为：' + data.msg);
+			console.log('receive updateWM event:', data.msg);
 			console.log(data.msg);
 			that.getWorkModelList(data.msg)
 		})
@@ -113,7 +116,7 @@ export default{
 				const Hours = time.split(':')[0]
 				let newHour = Hours<=12? Hours: (Number(Hours)-12).toString().padStart(2,'0')
 				if(newHour == 0){
-					newHour = '12' //凌晨12点
+					newHour = '12' // midnight 12:xx
 				}
 				return newHour+':'+time.split(':')[1]
 			},
@@ -133,7 +136,7 @@ export default{
 				} = this.devicemsg;
 				console.log(item);
 				uni.navigateTo({
-					url: `/pages/blemodule/blepattern/maintain?itemStr=${JSON.stringify(item)}&index=${index}&deviceKey=${deviceKey}&productKey=${productKey}&deviceName=${deviceName}`
+					url: `/pages/blemodule/blepattern/${this.maintainPage}?itemStr=${JSON.stringify(item)}&index=${index}&deviceKey=${deviceKey}&productKey=${productKey}&deviceName=${deviceName}`
 				})
 			// }
 		},
@@ -142,16 +145,16 @@ export default{
 			const byteArr = this.hexToBytes(hexStr);
 			const groupSize = byteArr.length / 11;
 			for (let n = 0; n < groupSize; n++) {
-				const p1 = byteArr[11 * n]; // Pl:模式标志(分别代表五个模式:0-4)
-				const p2 = byteArr[11 * n + 1]; // P2:为该模式工作日b0~b6表示周一至周日
-				const p3 = byteArr[11 * n + 2]; // P3,P4: 起始时间、小时分钟
+				const p1 = byteArr[11 * n]; // Pl:妯″紡鏍囧織(鍒嗗埆浠ｈ〃浜斾釜妯″紡:0-4)
+				const p2 = byteArr[11 * n + 1]; // P2:涓鸿妯″紡宸ヤ綔鏃0~b6琛ㄧず鍛ㄤ竴鑷冲懆鏃?
+				const p3 = byteArr[11 * n + 2]; // P3,P4: 璧峰鏃堕棿銆佸皬鏃跺垎閽?
 				const p4 = byteArr[11 * n + 3];
-				const p5 = byteArr[11 * n + 4]; // P5,P6: 结束时间、小时分钟
+				const p5 = byteArr[11 * n + 4]; // P5,P6: 缁撴潫鏃堕棿銆佸皬鏃跺垎閽?
 				const p6 = byteArr[11 * n + 5];
-				const p7 = byteArr[11 * n + 6]; // P7: 控制开关0关闭，1打开
-				const p8 = byteArr[11 * n + 7]; // P8，P9:工作时间，P8低八位，P9是高八位
+				const p7 = byteArr[11 * n + 6]; // P7: 鎺у埗寮€鍏?鍏抽棴锛?鎵撳紑
+				const p8 = byteArr[11 * n + 7]; // P8锛孭9:宸ヤ綔鏃堕棿锛孭8浣庡叓浣嶏紝P9鏄珮鍏綅
 				const p9 = byteArr[11 * n + 8];
-				const p10 = byteArr[11 * n + 9]; // P10,P11:停止时间，P10低八位，P11是高八位
+				const p10 = byteArr[11 * n + 9]; // P10,P11:鍋滄鏃堕棿锛孭10浣庡叓浣嶏紝P11鏄珮鍏綅
 				const p11 = byteArr[11 * n + 10];
 	
 				const model = {
@@ -181,27 +184,27 @@ export default{
 			for (let i = 0; i < itemList.length; i++) {
 				const item = itemList[i];
 		
-				// Pl:模式标志(分别代表五个模式:0-4)
+				// Pl:妯″紡鏍囧織(鍒嗗埆浠ｈ〃浜斾釜妯″紡:0-4)
 				const p1 = i;
-				// P2:为该模式工作日b0~b6表示周一至周日
+				// P2:涓鸿妯″紡宸ヤ綔鏃0~b6琛ㄧず鍛ㄤ竴鑷冲懆鏃?
 				const p2 = this.weekToByte(item.weeks);
-				//P3,P4: 起始时间、小时分钟
+				//P3,P4: 璧峰鏃堕棿銆佸皬鏃跺垎閽?
 				const p3 = parseInt(item.btime.split(':')[0]);
 				const p4 = parseInt(item.btime.split(':')[1]);
-				//P5,P6: 结束时间、小时分钟:
+				//P5,P6: 缁撴潫鏃堕棿銆佸皬鏃跺垎閽?
 				const p5 = parseInt(item.etime.split(':')[0]);
 				const p6 = parseInt(item.etime.split(':')[1]);
 				console.log(p3+':'+p4+':'+p5+':'+p6);
 			
 				
-				//P7: 控制开关0关闭，1打开
+				//P7: 鎺у埗寮€鍏?鍏抽棴锛?鎵撳紑
 				const p7 = (item.selected == true ? 1 : 0);
 				
-				//P8，P9:工作时间，P8低八位，P9是高八位
+				//P8锛孭9:宸ヤ綔鏃堕棿锛孭8浣庡叓浣嶏紝P9鏄珮鍏綅
 				const bytes = this.getLowHighBytes(parseInt(item.wtimes));
 				const p8 = bytes[1];
 				const p9 = bytes[0];
-				//P10,P11:停止时间，P10低八位，P11是高八位
+				//P10,P11:鍋滄鏃堕棿锛孭10浣庡叓浣嶏紝P11鏄珮鍏綅
 				const bytes2 = this.getLowHighBytes(parseInt(item.ptimes));
 				const p10 = bytes2[1];
 				const p11 = bytes2[0];
@@ -223,12 +226,12 @@ export default{
 			var hexStr = allBytes.map(byte => byte.toString(16).padStart(2, '0')).join('');
 			console.log(hexStr);
 			let data = getApp().dataHexStr('12','00',hexStr)
-			console.log('设备ID',this.deviceId);
-			console.log('设备数据',data);
+			console.log('deviceId', this.deviceId);
+			console.log('device data', data);
 			getApp().writeData(this.deviceId,data);
 			this.$store.commit('SET_MOMDELSTR',hexStr)
 		},
-		// 获取数值的底高八位
+		// 鑾峰彇鏁板€肩殑搴曢珮鍏綅
 		getLowHighBytes(integerValue) {
 			var lowByte = integerValue & 0xFF;
 			var highByte = (integerValue >> 8) & 0xFF;
@@ -240,7 +243,7 @@ export default{
 				return null;
 			}
 		},
-		// 星期转八位
+		// 鏄熸湡杞叓浣?
 		weekToByte(weeks) {
 			const mon = this.$t('com.mon');
 			const tue = this.$t('com.tue');
@@ -282,7 +285,7 @@ export default{
 		
 			return parseInt(bitstr, 2);
 		},
-		// 十六进制转byte数组
+		// 鍗佸叚杩涘埗杞琤yte鏁扮粍
 		hexToBytes(hex) {
 			let bytes = [];
 			for (let i = 0; i < hex.length; i += 2) {
@@ -290,12 +293,12 @@ export default{
 			}
 			return bytes;
 		},
-		// 低高八位转数值
+		// 浣庨珮鍏綅杞暟鍊?
 		getIntegerValue(lowByte, highByte) {
 			const integerValue = (highByte << 8) | lowByte;
 			return integerValue;
 		},
-		// 数值转二进制八位
+		// 鏁板€艰浆浜岃繘鍒跺叓浣?
 		decimalToBinary8(decimal) {
 			let binary = (decimal >>> 0).toString(2);
 			while (binary.length < 8) {
@@ -303,7 +306,7 @@ export default{
 			}
 			return binary;
 		},
-		// 二进制字符串转星期
+		// 浜岃繘鍒跺瓧绗︿覆杞槦鏈?
 		binaryStrToWeeks(decimal) {
 			const binaryStr = this.decimalToBinary8(decimal);
 			console.log(binaryStr);
@@ -436,3 +439,4 @@ export default{
 		margin-left: 10rpx;
 	}
 </style>
+

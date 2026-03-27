@@ -1,5 +1,5 @@
 <template>
-<view style="padding-bottom: 130rpx;">
+<view class="home-shell" style="padding-bottom: 130rpx;">
 	<uni-nav-bar fixed="true" status-bar left-width="0rpx" :border="false">
 		<template v-slot="">
 			<view class="top-nav-action" @click="navtoSelMode">
@@ -45,8 +45,8 @@
 			</view>
 		</view>
 	</view>
-	<view style="padding:20rpx;">
-		<image src="../../static/banner.png" mode="widthFix" style="width:100%"></image>
+	<view class="home-hero-wrap">
+		<image class="home-hero" src="../../static/banner.png" mode="widthFix"></image>
 	</view>
 <view class="connect-mode-tip">{{localeText('connect-mode-ble','\u5f53\u524d\u8fde\u63a5\uff1a\u84dd\u7259')}}</view>
 	<view style="display: flex;;width:100%;font-size: 30rpx;padding: 0 40rpx;padding-bottom: 40rpx;">
@@ -238,6 +238,22 @@ export default{
 		z-index: 2000;
 		background: transparent;
 	}
+	.home-shell{
+		min-height: 100vh;
+		background:
+			radial-gradient(circle at 16% 10%, rgba(72, 238, 220, 0.16), transparent 24%),
+			radial-gradient(circle at 86% 12%, rgba(86, 132, 255, 0.18), transparent 22%),
+			linear-gradient(180deg, #07111f 0%, #0a1730 48%, #08111f 100%);
+	}
+	.home-hero-wrap{
+		padding: 18rpx 20rpx 16rpx;
+	}
+	.home-hero{
+		width: 100%;
+		border-radius: 34rpx;
+		border: 1px solid rgba(125, 216, 255, 0.14);
+		box-shadow: 0 24rpx 58rpx rgba(0, 0, 0, 0.3);
+	}
 	.top-nav-action{
 		display: flex;
 		align-items: center;
@@ -245,13 +261,14 @@ export default{
 	}
 	.top-nav-back{
 		width: 18rpx;
-		opacity: 0.86;
+		opacity: 0.92;
+		filter: brightness(3.2);
 	}
 	.top-nav-text{
 		margin-left: 16rpx;
 		font-size: 28rpx;
 		font-weight: 500;
-		color: #45525f;
+		color: #dce8f7;
 		letter-spacing: 1rpx;
 	}
 	.top-nav-plus-wrap{
@@ -261,18 +278,20 @@ export default{
 		align-items: center;
 		justify-content: center;
 		border-radius: 20rpx;
-		border: 2rpx solid rgba(0, 173, 141, 0.16);
-		background: rgba(255,255,255,0.98);
-		box-shadow: 0 10rpx 26rpx rgba(0, 173, 141, 0.14), 0 4rpx 12rpx rgba(0,0,0,0.08);
+		border: 2rpx solid rgba(116, 220, 255, 0.18);
+		background: linear-gradient(180deg, rgba(16, 33, 58, 0.94) 0%, rgba(9, 20, 38, 0.9) 100%);
+		box-shadow: 0 14rpx 32rpx rgba(0,0,0,0.28), 0 0 24rpx rgba(69, 220, 255, 0.12);
 	}
 	.connect-mode-tip{
-		margin: 0 20rpx 24rpx;
-		padding: 14rpx 22rpx;
-		border-radius: 18rpx;
-		background: #eefaf5;
-		color: #00ad8d;
+		margin: 0 20rpx 26rpx;
+		padding: 16rpx 22rpx;
+		border-radius: 22rpx;
+		background: linear-gradient(180deg, rgba(13, 28, 50, 0.88) 0%, rgba(9, 20, 38, 0.82) 100%);
+		border: 1px solid rgba(112, 214, 255, 0.12);
+		color: #79ebff;
 		font-size: 24rpx;
 		font-weight: 600;
+		box-shadow: 0 14rpx 30rpx rgba(0, 0, 0, 0.18);
 	}
 	.add-device-btn {
 		width: 26rpx;
@@ -288,16 +307,18 @@ export default{
 		/* max-width: 340rpx; */
 		width: 340rpx;
 		/* max-width: 318rpx; */
-		padding-bottom: 20rpx;
-		padding-top: 20rpx;
-		border-radius: 20rpx;
-		background-color: #FFFFFF;
+		padding-bottom: 26rpx;
+		padding-top: 26rpx;
+		border-radius: 30rpx;
+		background: linear-gradient(180deg, rgba(15, 31, 55, 0.95) 0%, rgba(9, 19, 36, 0.92) 100%);
+		border: 1px solid rgba(126, 220, 255, 0.12);
+		box-shadow: 0 22rpx 48rpx rgba(0, 0, 0, 0.24);
 	}
 	.device-name {
-		color: #151515;
+		color: #f4fbff;
 		font-size: 32rpx;
 		/* padding-left: 40rpx; */
-		font-weight: bold;
+		font-weight: 600;
 		/* width: 280rpx; */
 		overflow: hidden;
 		text-overflow: ellipsis;
@@ -310,7 +331,7 @@ export default{
 		display: flex;
 		justify-content: center;
 		align-items: center;
-		height: 160rpx;
+		height: 168rpx;
 	}
 	.tabbar{
 		position: fixed;
@@ -318,7 +339,9 @@ export default{
 		width: 100%;
 		height: 100rpx;
 		font-size: 20rpx;
-		border-top: 2rpx solid #d9d9d9;
+		border-top: 1px solid rgba(124, 218, 255, 0.12);
+		background: rgba(6, 15, 28, 0.92);
+		backdrop-filter: blur(10rpx);
 	}
 	.grid-item-box {
 		flex: 1;
@@ -336,20 +359,23 @@ export default{
 	}
 	.setting-menu {
 		position: absolute;
-		right: 30rpx;
-		top: 20rpx;
-		min-width: 188rpx;
-		background: #fff;
-		padding: 40rpx 32rpx;
-		border-radius: 14rpx;
-		font-size: 30rpx;
+		right: 12rpx;
+		top: 8rpx;
+		min-width: 170rpx;
+		background: linear-gradient(180deg, rgba(16, 33, 58, 0.96) 0%, rgba(9, 20, 38, 0.92) 100%);
+		padding: 26rpx 24rpx;
+		border-radius: 22rpx;
+		font-size: 28rpx;
 		z-index: 9001;
 		box-sizing: border-box;
-		box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, 0.08);
+		border: 1px solid rgba(124, 218, 255, 0.16);
+		box-shadow: 0 18rpx 40rpx rgba(0, 0, 0, 0.28);
+		backdrop-filter: blur(8rpx);
 	}
 	.menu-item {
-		min-width: 120rpx;
+		min-width: 104rpx;
 		white-space: nowrap;
+		color: #e8f5ff;
 	}
 	.menu-text {
 		white-space: nowrap;
@@ -361,10 +387,10 @@ export default{
 		display: inline-block;
 		position: absolute;
 		top: -10rpx;
-		right: 20rpx;
+		right: 26rpx;
 		width: 20rpx;
 		height: 20rpx;
-		background: #fff;
+		background: #10213a;
 		transform: rotate(45deg);
 	}
 </style>

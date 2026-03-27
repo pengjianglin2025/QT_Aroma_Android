@@ -1,4 +1,4 @@
-<template>
+﻿<template>
 	<view>
 		<uni-nav-bar fixed="true" :border="false" status-bar left-icon="left" right-icon="gear" :title="devName" @clickLeft="back" @clickRight="navitoSet"/>
 		<view v-if="warring" class="no-oil">
@@ -354,6 +354,7 @@
 				rssiNum: null,//淇″彿鍊?
 				rssiTimer: null,
 				reconnectTimer: null,
+				notifyRetryTimer: null,
 				isLeavingPage: false,
 				isConnecting: false,
 				isReconnecting: false,
@@ -412,6 +413,7 @@
 			this.isConnecting = false
 			this.bleLinkActive = false
 			this.clearReconnectTimer()
+			this.clearNotifyRetryTimer()
 			this.teardownBleListeners()
 			clearInterval(this.rssiTimer)
 			this.rssiTimer = null
@@ -436,6 +438,7 @@
 				clearInterval(this.updateModeTimer)
 				this.updateModeTimer = null
 			}
+			this.clearNotifyRetryTimer()
 		},
 		methods: {
 			getDetailSnapshotKey(){
@@ -775,7 +778,7 @@
 									}else{
 										_this.getServices(deviceId)
 									}
-								},600)
+								},200)
 							},
 							fail: e => {
 								console.log('杩炴帴浣庡姛鑰楄摑鐗欏け璐ワ紝閿欒鐮侊細' + e.errCode); 
@@ -806,6 +809,12 @@
 					this.reconnectTimer = null
 				}
 			},
+			clearNotifyRetryTimer(){
+				if(this.notifyRetryTimer){
+					clearTimeout(this.notifyRetryTimer)
+					this.notifyRetryTimer = null
+				}
+			},
 			scheduleReconnect(){
 				if(this.isLeavingPage || !this.bleDeviceId || this.reconnectTimer || this.isConnecting){
 					return
@@ -817,7 +826,7 @@
 						return
 					}
 					this.connetDevice(this.bleDeviceId)
-				}, 800)
+				}, 350)
 			},
 			setMtu(deviceId){
 				let _this = this
@@ -825,7 +834,7 @@
 					console.log('succ====>',sue);
 					setTimeout(()=>{
 						_this.getServices(deviceId)
-					},400)
+					},150)
 				}})
 			},
 			getServices(deviceId){//鑾峰彇钃濈墮璁惧鎵€鏈夋湇鍔?
@@ -834,12 +843,47 @@
 				  deviceId,
 				  success(res) {
 				    console.log('device services:', res.services)
-					_this.getValueChange(deviceId)
+					const targetService = (res.services || []).find(item => (item.uuid || '').toUpperCase() === '0000FFF0-0000-1000-8000-00805F9B34FB')
+					if(!targetService){
+						_this.scheduleNotifyRetry(deviceId)
+						return
+					}
+					_this.getCharacteristics(deviceId, targetService.uuid)
 					
 				  }
 				})
 			},
-			getValueChange(deviceId){
+			getCharacteristics(deviceId, serviceId){
+				let _this = this
+				uni.getBLEDeviceCharacteristics({
+					deviceId,
+					serviceId,
+					success(res) {
+						const chars = res.characteristics || []
+						const notifyChar = chars.find(item => (item.uuid || '').toUpperCase() === '0000FFF1-0000-1000-8000-00805F9B34FB')
+						const writeChar = chars.find(item => (item.uuid || '').toUpperCase() === '0000FFF2-0000-1000-8000-00805F9B34FB')
+						if(!notifyChar || !writeChar){
+							_this.scheduleNotifyRetry(deviceId)
+							return
+						}
+						_this.getValueChange(deviceId, serviceId, notifyChar.uuid)
+					},
+					fail(){
+						_this.scheduleNotifyRetry(deviceId)
+					}
+				})
+			},
+			scheduleNotifyRetry(deviceId){
+				this.clearNotifyRetryTimer()
+				this.notifyRetryTimer = setTimeout(()=>{
+					this.notifyRetryTimer = null
+					if(this.isLeavingPage || !deviceId){
+						return
+					}
+					this.getServices(deviceId)
+				},300)
+			},
+			getValueChange(deviceId, serviceId = '0000FFF0-0000-1000-8000-00805F9B34FB', characteristicId = '0000FFF1-0000-1000-8000-00805F9B34FB'){
 				let _this = this
 				//鎵惧埌鍨嬪彿涓篕5-BTS鐨勮澶?
 				uni.notifyBLECharacteristicValueChange({
@@ -847,20 +891,24 @@
 				  // 杩欓噷鐨?deviceId 闇€瑕佸凡缁忛€氳繃 createBLEConnection 涓庡搴旇澶囧缓绔嬮摼鎺?
 				  deviceId,
 				  // 杩欓噷鐨?serviceId 闇€瑕佸湪 getBLEDeviceServices 鎺ュ彛涓幏鍙?
-				  serviceId:'0000FFF0-0000-1000-8000-00805F9B34FB',
+				  serviceId,
 				  // 杩欓噷鐨?characteristicId 闇€瑕佸湪 getBLEDeviceCharacteristics 鎺ュ彛涓幏鍙?
-				  characteristicId:'0000FFF1-0000-1000-8000-00805F9B34FB',
+				  characteristicId,
 				  success(res) {
 					console.log(res)
 					console.log('notifyBLECharacteristicValueChange success', res.errMsg)
+					_this.clearNotifyRetryTimer()
 					setTimeout(()=>{
 						console.log(_this.timeData);
 						getApp().writeData(_this.bleDeviceId,_this.timeData,false,'1c')
-					},300)
+					},100)
 					setTimeout(()=>{
 						uni.hideLoading()
 						getApp().writeData(_this.bleDeviceId,'00',true)
-					},700)
+					},300)
+				  },
+				  fail() {
+					_this.scheduleNotifyRetry(deviceId)
 				  }
 				})
 			},

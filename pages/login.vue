@@ -1,9 +1,8 @@
-<template>
+﻿<template>
 	<view class="normal-login-container">
 	<uni-nav-bar fixed="true" :border="false" status-bar left-icon="left" :title="$t('login')" @clickLeft="backSelmode" />
 		<view class="logo-content-img">
 			<view class="logo-content">
-				<view>{{$t('hello')}}，</view>
 				<view>{{$t('welcome')}} Aroma Buddy</view>
 			</view>
 			<view class="lc2"></view>
@@ -26,7 +25,7 @@
 				<uni-icons v-if="pswType=='password'" class="wifi-icon" color="#7f7f7f" style="position: absolute;right: 40rpx;" type="eye-slash" size="20" @click="pswType='text'"></uni-icons>
 			</view>
 
-			<view style="color:#7F7F7F;display:flex;justify-content: space-between;align-items: center;">
+			<view class="login-option-row" style="color:#7F7F7F;display:flex;justify-content: space-between;align-items: center;">
 				<checkbox-group  @change="checkChange">
 					<label >
 						<checkbox style="transform: scale(0.6);" :checked="mindPwd" activeBackgroundColor="#7F7F7F" iconColor="#fff"/>{{$t('remember-pwd')}}
@@ -40,22 +39,23 @@
 				<view><text @click="handleForgotPsw">{{$t('forget-pwd')}}?</text></view>
 			</view>
 
-			<view class="action-btn">
-				<button @click="handleLogin" class="login-btn cu-btn block lg" v-if="canLogin">{{$t('login')}}</button>
-				<button class="login-btn2 cu-btn block lg" v-else>{{$t('login')}}</button>
-			</view>
-			<view style="margin-top: 30rpx;color: #01CBA5;text-align: right;padding-right: 50rpx;font-size: 30rpx;">
-				<span @click="navToPrivacy">{{$t('Privacy')}}</span>
-			</view>
-			<view style="text-align: center;color:#7F7F7F;padding:20px;">
-				<text>{{$t('no-account')}}？</text><text style="color:#01CBA5;" @click="handleUserRegister">{{$t('now-register')}}</text>
-			</view>
-			<view class="other-login">
-				or
-			</view>
-			<view class="flex justify-center align-center visitor" @click="visitorLogin">
-				<image style="width: 40rpx;height: 40rpx;" src="/static/visitor01.png" mode=""></image>
-				<view style="margin-left: 10rpx;">{{$t('visitor')}}</view>
+			<view class="login-bottom-block">
+				<view class="action-row">
+					<view class="action-btn action-btn-main">
+						<button @click="handleLogin" class="login-btn cu-btn block lg" v-if="canLogin">{{$t('login')}}</button>
+						<button class="login-btn2 cu-btn block lg" v-else>{{$t('login')}}</button>
+					</view>
+					<view class="visitor visitor-inline flex justify-center align-center" @click="visitorLogin">
+						<image style="width: 34rpx;height: 34rpx;" src="/static/visitor01.png" mode=""></image>
+						<view style="margin-left: 10rpx;">{{$t('visitor')}}</view>
+					</view>
+				</view>
+				<view class="login-secondary-link" style="margin-top: 30rpx;color: #01CBA5;text-align: right;padding-right: 50rpx;font-size: 30rpx;">
+					<span @click="navToPrivacy">{{$t('Privacy')}}</span>
+				</view>
+				<view class="login-register-row" style="text-align: center;color:#7F7F7F;padding:20px;">
+					<text>{{$t('no-account')}}</text><text style="color:#7ae7ff;" @click="handleUserRegister">{{$t('now-register')}}</text>
+				</view>
 			</view>
 		<!-- 	<view style="margin-top: 82rpx;text-align: center;">
 				<view style="display: inline-block;" @click="visitorLogin">
@@ -94,11 +94,11 @@
 				canLogin: true,
 				codeUrl: "",
 				captchaEnabled: true,
-				// 用户注册开关
+				// 鐢ㄦ埛娉ㄥ唽寮€鍏?
 				register: true,
-				showp: false, //控制组件延时显示
-				nationalityList: [], //国家列表
-				seltctedCountry: {}, //选中的国家Object
+				showp: false, //鎺у埗缁勪欢寤舵椂鏄剧ず
+				nationalityList: [], //鍥藉鍒楄〃
+				seltctedCountry: {}, //閫変腑鐨勫浗瀹禣bject
 				globalConfig: getApp().globalData.config,
 				loginForm: {
 					// username: "admin",
@@ -137,7 +137,7 @@
 			navToPrivacy(){
 				this.$tab.navigateTo('/pages/privacy')
 			},
-			//返回模式选择界面
+			//杩斿洖妯″紡閫夋嫨鐣岄潰
 			backSelmode(){
 				uni.reLaunch({
 					url:'/pages/selectMode'
@@ -145,7 +145,7 @@
 			},
 			checkChange(e) {
 				console.log(e.detail.value);
-				//若数组里有长度则说明被选中
+				//鑻ユ暟缁勯噷鏈夐暱搴﹀垯璇存槑琚€変腑
 				const ischeck = e.detail.value.length
 				if(ischeck==0){
 					this.mindPwd = false
@@ -161,7 +161,7 @@
 					this.canLogin = false;
 				}
 			},
-			//获取国家列表
+			//鑾峰彇鍥藉鍒楄〃
 			getNationality() {
 				let that = this
 				queryNationalityList().then(res => {
@@ -180,7 +180,7 @@
 					}
 				})
 			},
-			//选择国家
+			//閫夋嫨鍥藉
 			selCountry(e) {
 				console.log(e);
 				this.seltctedCountry = e
@@ -192,39 +192,39 @@
 					console.log(res);
 				})
 			},
-			//显示选择国家弹窗
+			//鏄剧ず閫夋嫨鍥藉寮圭獥
 			showCountryPop() {
 				this.showp = true
 				setTimeout(() => {
 					this.$refs.countryPick.showpop()
 				}, 100)
 			},
-			//关闭选择国家弹窗
+			//鍏抽棴閫夋嫨鍥藉寮圭獥
 			closeCountryPop() {
 				this.showp = false
 				this.$refs.countryPick.cancel()
 			},
-			//忘记密码
+			//蹇樿瀵嗙爜
 			handleForgotPsw() {
 				// this.$tab.redirectTo(`/pages/forgotpassword`)
 				this.$tab.navigateTo(`/pages/forgotpassword`)
 			},
-			// 用户注册
+			// 鐢ㄦ埛娉ㄥ唽
 			handleUserRegister() {
 				// this.$tab.redirectTo(`/pages/register`)
 				this.$tab.navigateTo(`/pages/register`)
 			},
-			// 隐私协议
+			// 闅愮鍗忚
 			handlePrivacy() {
 				let site = this.globalConfig.appInfo.agreements[0]
 				this.$tab.navigateTo(`/pages/common/webview/index?title=${site.title}&url=${site.url}`)
 			},
-			// 用户协议
+			// 鐢ㄦ埛鍗忚
 			handleUserAgrement() {
 				let site = this.globalConfig.appInfo.agreements[1]
 				this.$tab.navigateTo(`/pages/common/webview/index?title=${site.title}&url=${site.url}`)
 			},
-			// 获取图形验证码
+			// 鑾峰彇鍥惧舰楠岃瘉鐮?
 			getCode() {
 				getCodeImg().then(res => {
 					this.captchaEnabled = res.captchaEnabled === undefined ? true : res.captchaEnabled
@@ -234,7 +234,7 @@
 					}
 				})
 			},
-			// 登录方法
+			// 鐧诲綍鏂规硶
 			async handleLogin() {
 				console.log('handleLogin...')
 				if (this.loginForm.username === "") {
@@ -243,21 +243,21 @@
 					this.$modal.msgError(this.$t('input-pwd'))
 				}
 				// else if (this.loginForm.code === "" && this.captchaEnabled) {
-				//         this.$modal.msgError("请输入验证码")
+				//         this.$modal.msgError("璇疯緭鍏ラ獙璇佺爜")
 				//       } 
 				else {
-					// this.$modal.loading("登录中，请耐心等待...")
+					// this.$modal.loading("鐧诲綍涓紝璇疯€愬績绛夊緟...")
 					// this.pwdLogin()
 					if (this.loginForm.username.indexOf('@') > -1) {
-						//邮箱密码登录
+						//閭瀵嗙爜鐧诲綍
 						this.emailLogin()
 					} else {
-						//手机号码密码登录
+						//鎵嬫満鍙风爜瀵嗙爜鐧诲綍
 						this.phoneLogin()
 					}
 				}
 			},
-			//手机号码密码登录
+			//鎵嬫満鍙风爜瀵嗙爜鐧诲綍
 			phoneLogin() {
 				let para = {
 					phone: this.loginForm.username,
@@ -276,7 +276,7 @@
 					this.loginSuccess()
 				})
 			},
-			//邮箱密码登录
+			//閭瀵嗙爜鐧诲綍
 			emailLogin() {
 				let para = {
 					email: this.loginForm.username,
@@ -295,7 +295,7 @@
 					this.loginSuccess()
 				})
 			},
-			// 密码登录
+			// 瀵嗙爜鐧诲綍
 			async pwdLogin() {
 				this.$store.dispatch('Login', this.loginForm).then(() => {
 					this.$modal.closeLoading()
@@ -306,9 +306,9 @@
 					}
 				})
 			},
-			// 登录成功后，处理函数
+			// 鐧诲綍鎴愬姛鍚庯紝澶勭悊鍑芥暟
 			loginSuccess(result) {
-				// 设置用户信息
+				// 璁剧疆鐢ㄦ埛淇℃伅
 				this.$store.dispatch('GetInfo').then(res => {
 					this.$tab.reLaunch('/pages/index')
 				})
@@ -320,7 +320,7 @@
 				}
 				const phoneId = uni.getStorageSync('phoneId')
 				if(!phoneId){
-					this.$modal.msgError('phoneId缺失')
+					this.$modal.msgError('phoneId缂哄け')
 					return false
 				}
 				if(!this.loginForm.internationalCode){
@@ -353,13 +353,13 @@
 						console.log(err)
 						uni.hideLoading()
 						const message = (err && err.msg) || (err && err.data) || (typeof err === 'string' ? err : '')
-						this.$modal.msgError(message ? `游客登录失败：${message}` : '游客登录失败：授权码登录失败')
+						this.$modal.msgError(message ? `娓稿鐧诲綍澶辫触锛?{message}` : '娓稿鐧诲綍澶辫触锛氭巿鏉冪爜鐧诲綍澶辫触')
 					})
 				}).catch((err)=>{
 					console.log(err)
 					uni.hideLoading()
 					const message = (err && err.msg) || (err && err.data) || (typeof err === 'string' ? err : '')
-					this.$modal.msgError(message ? `游客登录失败：${message}` : '游客登录失败：注册失败')
+					this.$modal.msgError(message ? ('游客登录失败：' + message) : '游客登录失败：注册失败')
 				})
 			},
 		}
@@ -368,27 +368,46 @@
 
 <style scoped lang="scss">
 	page {
-		background-color: #ffffff;
+		background-color: #07111f;
 	}
 
 	.normal-login-container {
+		position: relative;
+		min-height: 100vh;
+		overflow: hidden;
+		display: flex;
+		flex-direction: column;
+		background:
+			radial-gradient(circle at 16% 14%, rgba(64, 233, 214, 0.18), transparent 26%),
+			radial-gradient(circle at 84% 18%, rgba(87, 134, 255, 0.2), transparent 22%),
+			linear-gradient(180deg, #07111f 0%, #0a1730 48%, #08111f 100%);
 
 		.logo-content-img {
-			// margin-top: 106rpx;
-			// width: 690rpx;
-			// height: 390rpx;
-			// width:100%;
-			height: 160px;
-			background-image: url('../static/login-bg.png');
+			flex-shrink: 0;
+			height: 250rpx;
+			margin: 94rpx 24rpx 0;
+			border-radius: 34rpx;
+			background:
+				linear-gradient(180deg, rgba(13, 29, 56, 0.82) 0%, rgba(10, 23, 43, 0.65) 100%),
+				url('../static/login-bg.png');
+			background-size: cover;
+			background-position: center;
 			position: relative;
+			overflow: hidden;
+			border: 1px solid rgba(124, 219, 255, 0.12);
+			box-shadow: 0 28rpx 70rpx rgba(0, 0, 0, 0.28);
 		}
 
 		.logo-content-img>.logo-content {
 			position: absolute;
-			left: 20px;
-			bottom: 60px;
+			left: 36rpx;
+			right: 36rpx;
+			bottom: 44rpx;
 			color: #ffffff;
-			font-size: 20px;
+			font-size: 38rpx;
+			line-height: 1.22;
+			font-weight: 700;
+			text-shadow: 0 10rpx 30rpx rgba(0,0,0,0.2);
 		}
 
 		.lc2 {
@@ -396,17 +415,21 @@
 			left: 0;
 			bottom: 0;
 			width: 100%;
-			height: 30px;
-			background-color: #ffff;
-			border-top-left-radius: 100px;
-			border-top-right-radius: 100px;
+			height: 34rpx;
+			background: linear-gradient(180deg, rgba(8,17,31,0) 0%, rgba(8,17,31,0.85) 100%);
 		}
 
 		.login-form-content {
 			margin: 0 auto;
-			// width: 80%;
-			padding-left: 20px;
-			padding-right: 20px;
+			margin-top: 10rpx;
+			padding-left: 24rpx;
+			padding-right: 24rpx;
+			padding-bottom: 14rpx;
+			color: #dce9f9;
+			flex: 1;
+			display: flex;
+			flex-direction: column;
+			justify-content: flex-start;
 
 
 			.icon-left {
@@ -419,42 +442,73 @@
 			}
 
 			.input-item {
-				margin: 20px auto;
-				margin-top: 10px;
-				background-color: #f5f6f7;
-				height: 45px;
-				border-radius: 5px;
+				margin: 10rpx auto 14rpx;
+				background: linear-gradient(180deg, rgba(13, 28, 50, 0.88) 0%, rgba(9, 20, 38, 0.82) 100%);
+				height: 78rpx;
+				border-radius: 22rpx;
+				border: 1px solid rgba(125, 214, 255, 0.12);
+				box-shadow: 0 14rpx 28rpx rgba(0, 0, 0, 0.18);
 
 				.icon {
 					font-size: 38rpx;
 					margin-left: 10px;
-					color: #999;
+					color: #93a8c0;
 				}
 
 				.input {
 					width: 100%;
-					font-size: 14px;
-					line-height: 20px;
+					font-size: 28rpx;
+					line-height: 40rpx;
 					text-align: left;
 					padding-left: 15px;
+					color: #f4fbff;
 				}
 
 			}
 
 			.login-btn {
-				margin-top: 40px;
-				height: 45px;
-				background-color: #01CBA5;
+				margin-top: 0;
+				width: 100%;
+				height: 78rpx;
+				background: linear-gradient(135deg, #3df0d7 0%, #2f86ff 100%);
 				color: #ffffff;
-				border-radius: 10px;
+				border-radius: 24rpx;
+				box-shadow: 0 18rpx 34rpx rgba(55, 184, 255, 0.26);
 			}
 
 			.login-btn2 {
-				margin-top: 40px;
-				height: 45px;
-				background-color: #AAAAAA;
-				color: #ffffff;
-				border-radius: 10px;
+				margin-top: 0;
+				width: 100%;
+				height: 78rpx;
+				background: rgba(105, 121, 142, 0.4);
+				color: rgba(255,255,255,0.65);
+				border-radius: 24rpx;
+			}
+
+			.login-option-row{
+				width: 100%;
+				padding: 4rpx 0 0;
+			}
+
+			.action-row{
+				display: flex;
+				align-items: center;
+				gap: 18rpx;
+				margin-top: 0;
+				width: 100%;
+			}
+
+			.action-btn-main{
+				flex: 1;
+			}
+
+			.login-bottom-block{
+				width: 100%;
+				margin-top: 16rpx;
+				padding: 0;
+				display: flex;
+				flex-direction: column;
+				align-items: stretch;
 			}
 
 			.reg {
@@ -486,47 +540,42 @@
 		width: 66rpx;
 		height: 66rpx;
 	}
-	.other-login{
-		position: relative;
-		text-align: center;
-		color: #dfdfdf;
-		
-		::after{
-			
-		}
-	}
-	.other-login::before{
-		content: '';
-		display: inline-block;
-		position: absolute;
-		width: 40%;
-		height: 4rpx;
-		left: 0;
-		top: 50%;
-		transform: translateY(-50%);
-		background-color: #dfdfdf;
-	}
-	.other-login::after{
-		content: '';
-		display: inline-block;
-		position: absolute;
-		width: 40%;
-		height: 2rpx;
-		right: 0;
-		top: 50%;
-		transform: translateY(-50%);
-		background-color: #dfdfdf;
-	}
 	.visitor{
-		background-color: #01CBA5;
-		// padding: 30rpx 50rpx;
-		border-radius: 20rpx;
+		background: linear-gradient(135deg, rgba(55, 240, 212, 0.24), rgba(38, 123, 255, 0.28));
+		border: 1px solid rgba(123, 221, 255, 0.2);
+		border-radius: 24rpx;
 		color: #fff;
 		text-align: center;
 		width: 50%;
-		height: 90rpx;
-		line-height: 90rpx;
+		height: 74rpx;
+		line-height: 74rpx;
 		margin: auto;
-		margin-top: 40rpx;
+		margin-top: 16rpx;
+		box-shadow: 0 16rpx 30rpx rgba(0,0,0,0.16);
+	}
+	.visitor-inline{
+		flex: 1;
+		margin: 0;
+		height: 78rpx;
+		line-height: 78rpx;
+		border-radius: 24rpx;
+		background: rgba(19, 41, 72, 0.88);
+		border: 1px solid rgba(123, 221, 255, 0.16);
+		box-shadow: 0 14rpx 28rpx rgba(0,0,0,0.14);
+		font-size: 26rpx;
+	}
+	.login-secondary-link{
+		width: 100%;
+		text-align: center !important;
+		padding-right: 0 !important;
+		font-size: 28rpx !important;
+		margin-top: 18rpx !important;
+	}
+	.login-register-row{
+		width: 100%;
+		text-align: center !important;
+		padding: 14rpx 0 0 !important;
+		color: #8aa3bf !important;
+		font-size: 28rpx;
 	}
 </style>

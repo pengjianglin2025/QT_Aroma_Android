@@ -1,49 +1,52 @@
 <template>
-<view class="" style="background-color: #fff;padding-bottom: 40rpx;">
+<view class="setting-page">
 	<view class="page-title temp-page-title">
 		<image class="back-icon" src="../../../static/back.png" @click="back"></image>
-		<div class="title-text">
-			{{$t('index.setting')}}
-		</div>
+		<view class="title-text">{{$t('index.setting')}}</view>
 	</view>
-	<view style="padding: 40rpx;font-size: 32rpx;">
-		<view class="list-cell-arrow work-timing" @click="showSetNamePop">
-		  <view class="menu-item-box">
-		    <view>{{$t('device-name')}}</view>
-			<view class="time-text">{{deviceMsg.deviceName}}</view>
-		  </view>
+
+	<!-- 信息列表 -->
+	<view class="list-card">
+		<!-- 设备名称 -->
+		<view class="list-item arrow" @click="showSetNamePop">
+			<text class="item-label">{{$t('device-name')}}</text>
+			<view class="item-right">
+				<text class="item-value">{{deviceMsg.deviceName}}</text>
+				<text class="arrow-icon">›</text>
+			</view>
 		</view>
-		<view class="work-timing">
-		  <view class="menu-item-box">
-		    <view>{{$t('device-sn')}}</view>
-			<view style="margin-top: 10rpx;color: #848484;">{{bleDeviceId}}</view>
-		  </view>
+		<view class="divider"></view>
+		<!-- 设备ID -->
+		<view class="list-item">
+			<text class="item-label">{{$t('device-sn')}}</text>
+			<text class="item-value">{{bleDeviceId}}</text>
 		</view>
-		<!-- <view class="work-timing">
-		  <view class="menu-item-box">
-		    <view>productKey</view>
-			<view class="time-text">{{deviceMsg.productKey}}</view>
-		  </view>
+		<view class="divider"></view>
+		<!-- 固件升级 -->
+		<view class="list-item arrow" @click="toOtaPage">
+			<text class="item-label">固件升级</text>
+			<view class="item-right">
+				<text class="item-value">OTA</text>
+				<text class="arrow-icon">›</text>
+			</view>
 		</view>
-		<view class=" work-timing">
-		  <view class="menu-item-box">
-		    <view>设备SN</view>
-			<view style="color: #848484;">{{deviceMsg.sn}}</view>
-		  </view>
-		</view> -->
 	</view>
+
+	<!-- 移除设备 -->
 	<view class="delete-dev" @click="delDevice">
 		{{$t('delete-device')}}
 	</view>
+
+	<!-- 修改名称弹窗 -->
 	<uni-popup ref="gname" type="center">
 		<view class="err-pop">
-			<div class="gr-name text-center" style="padding: 20rpx 0;font-size: 40rpx;">{{$t('device-name')}}</div>
+			<view class="gr-name text-center" style="padding: 20rpx 0;font-size: 40rpx;">{{$t('device-name')}}</view>
 			<view class="input-item flex align-center input-shadow">
 			  <input v-model="changeName" class="input" type="text" :placeholder="$t('input-group-name')" maxlength="30" />
 			</view>
-			<div class="close-errpop" @click="editDeviceName">
-				<span class="login-btn cu-btn block lg round" style="width: 80%;margin: auto;background-color: #01CBA5;color: #fff;">{{$t('com.confirm')}}</span> 
-			</div>
+			<view class="close-errpop" @click="editDeviceName">
+				<view class="login-btn cu-btn block lg round" style="width: 80%;margin: auto;background-color: #01CBA5;color: #fff;text-align:center;padding:20rpx 0;border-radius:50rpx;">{{$t('com.confirm')}}</view>
+			</view>
 		</view>
 	</uni-popup>
 </view>
@@ -57,11 +60,11 @@ export default{
 		return{
 			pk:null,
 			dk:null,
-			bleDeviceId:'',//蓝牙设备id
+			bleDeviceId:'',
 			changeName:'',
 			deviceMsg:{
 				deviceName:null
-			},//设备详情信息
+			},
 		}
 	},
 	computed:{
@@ -73,30 +76,22 @@ export default{
 	onLoad(data) {
 		this.bleDeviceId = data.bleDeviceId
 		this.deviceMsg.deviceName = this.devName
-		// this.pk = data.pk
-		// this.dk = data.dk
 	},
 	onShow() {
 		console.log(uni.getStorageSync('bleDeviceList'));
 	},
 	methods:{
-		//打开修改名称弹窗
 		showSetNamePop(){
 			if(this.isOffline){
-				uni.showToast({
-					title: this.$t("offline-tip"),
-					icon: 'none'
-				})
+				uni.showToast({ title: this.$t("offline-tip"), icon: 'none' })
 			}else{
 				this.changeName = this.deviceMsg.deviceName
 				this.$refs.gname.open('center')
 			}
 		},
-		//关闭修改名称弹窗
 		hideSetNamePop(){
 			this.$refs.gname.close()
 		},
-		//修改设备名称
 		editDeviceName(){
 			this.$modal.msg(this.$t('success'))
 			this.$store.commit('SET_DEVICENAME',this.changeName)
@@ -110,47 +105,95 @@ export default{
 			uni.setStorageSync('bleDeviceList',devList)
 			this.hideSetNamePop()
 		},
-		//移除设备
+		toOtaPage(){
+			uni.navigateTo({
+				url: '/pages/blemodule/ota/index?deviceId=' + this.bleDeviceId
+			})
+		},
 		delDevice(){
 			let that = this
 			uni.showModal({
 			  title: this.$t('com.tip'),
 			  content: this.$t('confirm-remove-device'),
 			  cancelText: this.$t('com.cancel'),
-			  confirmText:this.$t('com.confirm'),
+			  confirmText: this.$t('com.confirm'),
 			  success: function(res) {
 			    if (res.confirm) {
 					that.$store.commit('DELETE_BLEDEVICELIST',that.bleDeviceId)
 					that.$tab.reLaunch('/pages/blemodule/index')
 			    }
 			  }
-			})	
+			})
 		}
 	}
 }
 </script>
 
 <style scoped>
-	.work-timing{
-		position: relative;
-		padding: 20rpx 0;
-	}
-	.time-text{
-		position: absolute;
-		top: 50%;
-		right: 80rpx;
-		transform: translateY(-50%);
-		color: #848484;
-	}
-	.delete-dev{
-		text-align: center;
-		width: 630rpx;
-		height: 98rpx;
-		line-height: 98rpx;
-		background: linear-gradient(to right,#01CBA5,#01CBA5);
-		border-radius: 12rpx;
-		color: #fff;
-		font-size: 36rpx;
-		margin: auto;
-	}
+.setting-page {
+	min-height: 100vh;
+	background-color: #F5F6FA;
+	padding-bottom: 60rpx;
+}
+
+/* 信息卡片 */
+.list-card {
+	margin: 24rpx 30rpx;
+	background: #fff;
+	border-radius: 20rpx;
+	overflow: hidden;
+}
+
+.list-item {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	justify-content: space-between;
+	padding: 0 36rpx;
+	height: 110rpx;
+	font-size: 30rpx;
+	color: #222;
+}
+
+.item-label {
+	font-size: 30rpx;
+	color: #222;
+}
+
+.item-value {
+	font-size: 28rpx;
+	color: #848484;
+}
+
+.item-right {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+}
+
+.arrow-icon {
+	font-size: 40rpx;
+	color: #C0C0C0;
+	margin-left: 8rpx;
+	line-height: 1;
+}
+
+.divider {
+	height: 1rpx;
+	background-color: #F0F0F0;
+	margin-left: 36rpx;
+}
+
+/* 移除设备按钮 */
+.delete-dev {
+	text-align: center;
+	width: 630rpx;
+	height: 98rpx;
+	line-height: 98rpx;
+	background: #01CBA5;
+	border-radius: 50rpx;
+	color: #fff;
+	font-size: 34rpx;
+	margin: 40rpx auto 0;
+}
 </style>

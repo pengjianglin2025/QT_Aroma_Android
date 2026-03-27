@@ -137,7 +137,7 @@
 			// loggerList.push('send===========>55AA0008000007')
 			// this.$store.commit('SET_TESTLOGGER',loggerList)
 	  	}else{
-	  		console.log('闂備礁鎲￠悷锕傚垂閸ф鐒垫い鎴ｅ劵閸忓本绻?6闂佸搫顦弲婊呯矙閹达箑鏄ユ俊銈呮噹閺嬩線鏌ｅΔ鈧悧鍡欑矈?..',head+len+data+check);
+      console.log('send hex data...', head + len + data + check);
 	  		buffer = _this.hexStr2Arrbuff(head+len+data+check)
 			//濠电偞鍨堕幐鎼侇敄婢跺鐒介柣妤€鐗忛々鐑芥煥濠靛棙宸濋柛銊﹀▕閺岋繝宕熼棃娑氫哗濠殿喖婀遍崰搴敊韫囨稑唯闁冲搫鍊风划顖炴煟閻斿憡纾婚柣鎺炲缁﹦鈧潧鎲＄€氭岸鏌￠崶鈺佇ｉ柣锝変憾閺屾稑鈻庨幇顒備紝闂侀€炲苯鍘搁柣鎺炵畱铻為柍鍝勫閻も偓濠德板€曢鍥╃矆婢跺ň妲堥柟鎯х－鏁堝┑鐐存尭婢у酣骞夐悧鍫熷闁绘垶顭囬崙浠嬫⒑鐟欏嫪鑸柛搴㈢叀瀵偊鎮欓悜妯煎帓?
 			// loggerList.push('send===========>'+head+len+data+check)
